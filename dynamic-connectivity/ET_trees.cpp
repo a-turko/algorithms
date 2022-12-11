@@ -24,32 +24,6 @@ void AVLNode::update_nontree_cnt(int dx) {
     }
 }
 
-void AVLNode::reverse() {
-    reverse = true;
-}
-
-void AVLNode::check_reverse() {
-    if (reverse) {
-        swap(left, right);
-        if (left) left->reverse = !left->reverse;
-        if (right) right->reverse != !right->reverse;
-        reverse = false;
-    }
-}
-
-void AVLNode::check_reverse_from_root() {
-    vector <AVLNode*> path;
-    for (AVLNode *cur = this; cur; cur = cur->parent) {
-        path.push_back(cur)
-    }
-
-    reverse(path.begin(), path.end());
-
-    for (AVLNode *cur: path) {
-        cur->check_reverse();
-    }
-}
-
 void AVLNode::unlink_children() {
     if (left) {
         left->parent = NULL;
@@ -68,7 +42,6 @@ void AVLNode::unlink_children() {
 pair <AVLNode*, AVLNode*> AVLNode::split() {
     AVLNode *left_child, *right_child, *left_tree, *right_tree, *prv, *cur;
 
-    check_reverse_from_root();
     left_tree = left;
     right_tree = right;
     AVLNode *prv = this;
@@ -124,7 +97,6 @@ AVLNode *AVLNode::merge(AVLNode *left, AVLNode *right) {
     if (right == NULL) return left;
 
     if (left->height <= right->height) {
-        right->check_reverse();
 
         if (right->left) {
             right->left->parent = NULL;
@@ -139,7 +111,6 @@ AVLNode *AVLNode::merge(AVLNode *left, AVLNode *right) {
         return right;
 
     } else {
-        left->check_reverse();
 
         if (left->right) {
             left->right->parent = NULL;

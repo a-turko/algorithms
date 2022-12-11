@@ -8,21 +8,17 @@ virtual class AVLNode {
 
     pair <AVLNode*, AVLNode*> split();
     void remove();
-    void reverse();
     static AVLNode *merge(AVLNode *left, AVLNode *right);
     AVLNode *root();
     bool pop_nontree_edge(pair <int, int> &edge);
 
     private:
     AVLNode *left, *right, *parent;
-    bool reverse;
     unsigned int height;
     unsigned int nontree_cnt;
 
     void local_update();
     void update_nontree_cnt(int dx);
-    void check_reverse_from_root();
-    void check_reverse();
     virtual void recount_nontree_cnt() {};
 }
 
