@@ -6,7 +6,7 @@ virtual class AVLNode {
 
     AVLNode();
 
-    void split();
+    pair <AVLNode*, AVLNode*> split();
     void remove();
     void reverse();
     static AVLNode *merge(AVLNode *left, AVLNode *right);
@@ -29,6 +29,9 @@ virtual class AVLNode {
 class EdgeNode : private AVLNode {
     public:
         int from, to;
+    
+    private:
+        void recount_nontree_cnt();
 }
 
 class VertexNode: private AVLNode {

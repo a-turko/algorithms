@@ -65,7 +65,7 @@ void AVLNode::unlink_children() {
     recount_nontree_cnt();
 }
 
-void AVLNode::split() {
+pair <AVLNode*, AVLNode*> AVLNode::split() {
     AVLNode *left_child, *right_child, *left_tree, *right_tree, *prv, *cur;
 
     check_reverse_from_root();
@@ -99,6 +99,80 @@ void AVLNode::split() {
         if (right_child)
             right_tree = merge(right_tree, merge(prv, right_child));
 
+    }
+
+    return {left_tree, right_tree};
+}
+
+void AVLNode::update_statistics() {
+    height = 1;
+    size = 1;
+    if (left) {
+        height = max(height, left->height + 1);
+        size += left->size;
+    }
+    if (right) {
+        height = max(height, right->height + 1);
+        size += right->size;
+    }
+
+    recount_nontree_cnt();
+}
+
+AVLNode *AVLNode::merge(AVLNode *left, AVLNode *right) {
+    if (left == NULL) return right;
+    if (right == NULL) return left;
+
+    if (left->height <= right->height) {
+        right->check_reverse();
+
+        if (right->left) {
+            right->left->parent = NULL;
+            right->left = merge(left, right->left);
+            right->left->parent = right;
+        } else {
+            right->left = left;
+            left->parent = right;
+        }
+
+        right->update_statistics();
+        return right;
+
+    } else {
+        left->check_reverse();
+
+        if (left->right) {
+            left->right->parent = NULL;
+            left->right = merge(left->right, right);
+            left->right->parent = left;
+        } else {
+            left->right = right;
+            right->parent = left;
+        }
+
+        left->update_statistics();
+        return left;
+    }
+}
+
+void AVLNode::remove() {
+    AVLNode *left_child, *right_child, *subtree;
+
+    left_child = left;
+    right_child = right;
+    unlink_children();
+
+    subtree = merge(left_child, right_child);
+    if (parent) {
+        if (parent->left == this) {
+            parent->left = subtree;
+        } else {
+            parent->right = subtree;
+        }
+    }
+
+    for (AVLNode *cur = parent; cur; cur = cur->parent) {
+        cur->update_statistics();
     }
 }
 
@@ -146,7 +220,7 @@ EdgeNode::EdgeNode(int a, int b): AVLNode() {
     to = b;
 }
 
-void EdgeNode::update_nontree_cnt(int dx) {
+void EdgeNode::recount_nontree_cnt(int dx) {
     nontree_cnt = 0;
     if (left) nontree_cnt += left->nontree_cnt;
     if (right) nontree_cnt += right->nontree_cnt;
@@ -161,11 +235,22 @@ ETTForest::ETTForest(int n) {
 void ETTForest::insert_tree_edge(int a, int b) {
     EdgeNode *ab_edge = new EdgeNode(a,b);
     EdgeNode *ba_edge = new EdgeNode(b,a);
-
-
+    AVLNode *b_tree;
 
     TEdgeHooks[{a,b}] = ab_edge;
     TEdgeHooks[{b,a}] = ba_edge;
+
+    auto [left_a, right_a] = Vertices[a].split();
+    auto [left_b, right_b] = Vertices[b].split();
+
+    // make b the start (and end) of the corresponding Euler tour:
+    b_tree = AVLNode::merge(right_b, left_b);
+
+    // insert the edge:
+    b_tree = AVLNode::merge(ab_edge, merge(b_tree, ba_edge));
+
+    // merge the Euler tours:
+    AVLNode::merge(left_a, merge(b_tree, right_a));
 }
 
 void ETTForest::insert_nontree_edge(int a, int b) {
@@ -181,7 +266,6 @@ void ETTForest::remove_nontree_edge(int a, int b) {
 }
 
 bool ETTForest::pop_nontree_edge(int a, pair <int, int> &edge) {
-
     NodeAVL *root = Vertices[a].root();
 
     if (!root->pop_nontree_edge(edge))
@@ -205,4 +289,3 @@ bool ETTForest::is_tree_edge(int a, int b) {
 int ETTForest::size(int a) {
     return Vertices[a].root()->size;
 }
-

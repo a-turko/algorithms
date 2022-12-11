@@ -68,7 +68,7 @@ void DynamicConnectivity::remove(int a, int b) {
         Forests[l].remove_tree_edge(a, b);
     }
 
-    // Look for a replacementof the removed edge:
+    // Look for a replacement of the removed edge:
 
     for (int l = level; l >= 0; l--) {
         int sa = Forests[l].size(a);
