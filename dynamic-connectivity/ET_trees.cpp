@@ -1,5 +1,9 @@
 #include "ET_trees.hpp"
 
+static int64_t edge_id(int a, int b) {
+    return (int64_t(a) << 32) | b;
+}
+
 AVLNode::AVLNode() {
     size = 1;
     left = right = parent = NULL;
@@ -15,11 +19,15 @@ AVLNode *AVLNode::root() {
     return cur;
 }
 
+void AVLNode::update_on_level_cnt(int dx) {
+    for (AVLNode *cur = this; cur != NULL; cur = cur->parent) {
+        cur->on_level_cnt += dx;
+    }
+}
+
 void AVLNode::update_nontree_cnt(int dx) {
-    AVLNode *cur = this;
-    while (cur != NULL) {
+   for (AVLNode *cur = this; cur != NULL; cur = cur->parent) {
         cur->nontree_cnt += dx;
-        cur = cur->parent;
     }
 }
 
@@ -79,13 +87,16 @@ pair <AVLNode*, AVLNode*> AVLNode::split() {
 void AVLNode::update_statistics() {
     height = 1;
     size = 1;
+    on_level_cnt = is_on_level() ? 1 : 0;
     if (left) {
         height = max(height, left->height + 1);
         size += left->size;
+        on_level_cnt += left->on_level_cnt;
     }
     if (right) {
         height = max(height, right->height + 1);
         size += right->size;
+        on_level_cnt += right->on_level_cnt;
     }
 
     recount_nontree_cnt();
@@ -154,6 +165,14 @@ bool AVLNode::pop_nontree_edge(pair <int, int> &edge) {
            (right && right->pop_nontree_edge(edge));
 }
 
+bool AVLNode::promote_tree_edge(pair <int, int> &edge) {
+    if (nontree_cnt == 0)
+        return false;
+    
+    return (left && left->promote_tree_edge(edge)) ||
+           (right && right->promote_tree_edge(edge));
+}
+
 unsigned int AVLNode::get_nontree_cnt() {
     return nontree_cnt;
 }
@@ -162,6 +181,7 @@ bool AVLNode::correct_tree(AVLNode *correct_parent) {
     unsigned int correct_height = 1;
     unsigned int correct_size = 1;
     unsigned int correct_nontree_cnt = get_num_nontree_edges();
+    unsigned int correct_on_level_cnt = is_on_level() ? 1 : 0;
 
     if (parent != correct_parent)
         return false;
@@ -172,7 +192,8 @@ bool AVLNode::correct_tree(AVLNode *correct_parent) {
         
         correct_height = max(correct_height, left->height + 1);
         correct_size += left->size;
-        correct_nontree_cnt += left->get_nontree_cnt();
+        correct_nontree_cnt += left->nontree_cnt;
+        correct_on_level_cnt += left->on_level_cnt;
 
         if (left->height < height - 2)
             return false;
@@ -188,7 +209,8 @@ bool AVLNode::correct_tree(AVLNode *correct_parent) {
         
         correct_height = max(correct_height, right->height + 1);
         correct_size += right->size;
-        correct_nontree_cnt += right->get_nontree_cnt();
+        correct_nontree_cnt += right->nontree_cnt;
+        correct_on_level_cnt += right->on_level_cnt;
 
         if (right->height < height - 2)
             return false;
@@ -205,6 +227,9 @@ bool AVLNode::correct_tree(AVLNode *correct_parent) {
         return false;
 
     if (correct_nontree_cnt != nontree_cnt)
+        return false;
+    
+    if (correct_on_level_cnt != on_level_cnt)
         return false;
     
     return true;
@@ -246,9 +271,15 @@ VertexNode::VertexNode(int i): AVLNode() {
     idx = i;
 }
 
-EdgeNode::EdgeNode(int a, int b): AVLNode() {
+bool VertexNode::is_on_level() {
+    return false;
+}
+
+EdgeNode::EdgeNode(int a, int b, bool _on_level): AVLNode() {
     from = a;
     to = b;
+    on_level = _on_level;
+    on_level_cnt = on_level ? 1 : 0;
 }
 
 void EdgeNode::recount_nontree_cnt() {
@@ -257,8 +288,24 @@ void EdgeNode::recount_nontree_cnt() {
     if (right) nontree_cnt += right->get_nontree_cnt();
 }
 
+bool EdgeNode::promote_tree_edge(pair <int, int> &edge) {
+    if (on_level) {
+        edge = {from, to};
+        on_level = false;
+        update_on_level_cnt(-1);
+        return true;
+    }
+    
+    return AVLNode::promote_tree_edge(edge);
+}
+
+
 int EdgeNode::get_num_nontree_edges() {
     return 0;
+}
+
+bool EdgeNode::is_on_level() {
+    return on_level;
 }
 
 ETTForest::ETTForest(int n) {
@@ -267,9 +314,9 @@ ETTForest::ETTForest(int n) {
     }
 }
 
-void ETTForest::insert_tree_edge(int a, int b) {
-    EdgeNode *ab_edge = new EdgeNode(a,b);
-    EdgeNode *ba_edge = new EdgeNode(b,a);
+void ETTForest::insert_tree_edge(int a, int b, bool on_level) {
+    EdgeNode *ab_edge = new EdgeNode(a,b, on_level);
+    EdgeNode *ba_edge = new EdgeNode(b,a, on_level);
     AVLNode *b_tree;
 
     TEdgeHooks[edge_id(a,b)] = ab_edge;
@@ -321,6 +368,16 @@ void ETTForest::insert_nontree_edge(int a, int b) {
     NTEdgeHooks[edge_id(b,a)] = Vertices[b].push_nontree_edge(a);
 }
 
+vector <pair <int, int> > ETTForest::promote_tree_edges(int a) {
+    vector <pair <int, int> > edges;
+    pair <int, int> edge;
+
+    while (Vertices[a].promote_tree_edge(edge)) {
+        edges.push_back(edge);
+    }
+    return edges;
+}
+
 void ETTForest::remove_nontree_edge(int a, int b) {
     Vertices[a].erase_nontree_edge(NTEdgeHooks[edge_id(a,b)]);
     Vertices[b].erase_nontree_edge(NTEdgeHooks[edge_id(b,a)]);
@@ -351,10 +408,6 @@ bool ETTForest::is_tree_edge(int a, int b) {
 
 int ETTForest::size(int a) {
     return Vertices[a].root()->size;
-}
-
-int64_t ETTForest::edge_id(int a, int b) {
-    return int64_t(a) << 32 | b;
 }
 
 bool ETTForest::correct() {    
