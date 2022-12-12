@@ -1,44 +1,28 @@
 #include <bits/stdc++.h>
-#include "ET_trees.hpp"
+#include "dc.hpp"
 using namespace std;
 
-class DynamicConnectivity {
-    public:
-    DynamicConnectivity(int n);
-    void insert(int a, int b, int eid);
-    void remove(int b, int b, int eid);
-    bool connected(int a, int b);
-
-    private:
-    void insert_edge(int a, int b, int level);
-    pair <int, int> edge(int a, int b);
-    vector <ETTForest> Forests;
-    map<pair<int, int>, int> EdgeLevels;
-    map<pair<int, int>, int> EdgeCnt;
-    int L;
-};
-
-pair <int, int> DynamicConnectivity::edge(int a, int b) {
+pair <int, int> DynamicConnectivity::ordered_pair(int a, int b) {
     return {min(a,b), max(a,b)};
 }
 
-void DynamicConnectivity::DynamicConnectivity(int n) {
+DynamicConnectivity::DynamicConnectivity(int n) {
     L = 0;
     while (n > (1<<L)) L++;
 
     Forests.resize(L+1, ETTForest(n));
 }
 
-void DynamicConnectivity::insert(int a, int b, int level) {
+void DynamicConnectivity::insert(int a, int b) {
 
-    if (EdgeCnt[edge(a,b)]++ == 0)
-        insert_edge(a, b, level);
+    if (EdgeCnt[ordered_pair(a,b)]++ == 0)
+        insert_edge(a, b, 0);
 
 }
 
 void DynamicConnectivity::insert_edge(int a, int b, int level) {
 
-    EdgeLevels[edge(a,b)] = level;
+    EdgeLevels[ordered_pair(a,b)] = level;
 
     if (Forests[level].connected(a,b)) {
         Forests[level].insert_tree_edge(a, b);
@@ -53,13 +37,17 @@ bool DynamicConnectivity::connected(int a, int b) {
 
 void DynamicConnectivity::remove(int a, int b) {
 
-    if (--EdgeCnt[edgge(a,b)] > 0)
+    // Check if the edge exists
+    if (EdgeCnt[ordered_pair(a,b)] == 0)
+        return;
+    
+    if (--EdgeCnt[ordered_pair(a,b)] > 0)
         return;
 
     // Remove the edge:
-    int level = EdgeLevels[edge(a,b)];
+    int level = EdgeLevels[ordered_pair(a,b)];
 
-    if (!Forest[level].is_tree_edge(a, b)) {
+    if (!Forests[level].is_tree_edge(a, b)) {
         Forests[level].remove_nontree_edge(a, b);
         return;
     }
@@ -69,7 +57,6 @@ void DynamicConnectivity::remove(int a, int b) {
     }
 
     // Look for a replacement of the removed edge:
-
     for (int l = level; l >= 0; l--) {
         int sa = Forests[l].size(a);
         int sb = Forests[l].size(b);
@@ -78,17 +65,17 @@ void DynamicConnectivity::remove(int a, int b) {
             swap(a, b);
 
         pair <int, int> edge;
-        while (Forest[l].pop_nontree_edge(a, edge)) {
+        while (Forests[l].pop_nontree_edge(a, edge)) {
             
-            if (Forest[l].connected(edge.first, edge.second)) {
+            if (Forests[l].connected(edge.first, edge.second)) {
                 
-                insert_edge(a,b,l+1)
-                EdgeLevels[edge(a,b)] = l+1;
+                insert_edge(a,b,l+1);
+                EdgeLevels[ordered_pair(a,b)] = l+1;
 
             } else {
                 
                 // We have found a replacement edge!
-                Forest[l].insert_tree_edge(a,b);
+                Forests[l].insert_tree_edge(a,b);
 
                 return;
             }
@@ -96,8 +83,10 @@ void DynamicConnectivity::remove(int a, int b) {
     }
 }
 
-
-int main()
-{
-
+bool DynamicConnectivity::correct() {
+    for (int l = 0; l <= L; l++) {
+        if (!Forests[l].correct())
+            return false;
+    }
+    return true;
 }

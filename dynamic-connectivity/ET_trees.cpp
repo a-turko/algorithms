@@ -5,10 +5,9 @@ AVLNode::AVLNode() {
     left = right = parent = NULL;
     height = 1;
     nontree_cnt = 0;
-    rotation = false;
 }
 
-AVLNode::root() {
+AVLNode *AVLNode::root() {
     AVLNode *cur = this;
     while (cur->parent != NULL) {
         cur = cur->parent;
@@ -44,8 +43,8 @@ pair <AVLNode*, AVLNode*> AVLNode::split() {
 
     left_tree = left;
     right_tree = right;
-    AVLNode *prv = this;
-    AVLNode *cur = parent;
+    prv = this;
+    cur = parent;
 
     unlink_children();
 
@@ -155,6 +154,63 @@ bool AVLNode::pop_nontree_edge(pair <int, int> &edge) {
            (right && right->pop_nontree_edge(edge));
 }
 
+unsigned int AVLNode::get_nontree_cnt() {
+    return nontree_cnt;
+}
+
+bool AVLNode::correct_tree(AVLNode *correct_parent) {
+    unsigned int correct_height = 1;
+    unsigned int correct_size = 1;
+    unsigned int correct_nontree_cnt = get_num_nontree_edges();
+
+    if (parent != correct_parent)
+        return false;
+
+    if (left) {
+        if (left->correct_tree(this))
+            return false;
+        
+        correct_height = max(correct_height, left->height + 1);
+        correct_size += left->size;
+        correct_nontree_cnt += left->get_nontree_cnt();
+
+        if (left->height < height - 2)
+            return false;
+
+    } else {
+        if (height > 2)
+            return false;
+    }
+    
+    if (right) {
+        if (right->correct_tree(this))
+            return false;
+        
+        correct_height = max(correct_height, right->height + 1);
+        correct_size += right->size;
+        correct_nontree_cnt += right->get_nontree_cnt();
+
+        if (right->height < height - 2)
+            return false;
+
+    } else {
+        if (height > 2)
+            return false;
+    }
+
+    if (correct_height != height)
+        return false;
+    
+    if (correct_size != size)
+        return false;
+
+    if (correct_nontree_cnt != nontree_cnt)
+        return false;
+    
+    return true;
+}
+
+
 list<int>::iterator VertexNode::push_nontree_edge(int to) {
     NTEdges.push_front(to);
     update_nontree_cnt(1);
@@ -178,8 +234,12 @@ void VertexNode::erase_nontree_edge(list<int>::iterator it) {
 
 void VertexNode::recount_nontree_cnt() {
     nontree_cnt = NTEdges.size();
-    if (left) nontree_cnt += left->nontree_cnt;
-    if (right) nontree_cnt += right->nontree_cnt;
+    if (left) nontree_cnt += left->get_nontree_cnt();
+    if (right) nontree_cnt += right->get_nontree_cnt();
+}
+
+int VertexNode::get_num_nontree_edges() {
+    return NTEdges.size();
 }
 
 VertexNode::VertexNode(int i): AVLNode() {
@@ -191,10 +251,14 @@ EdgeNode::EdgeNode(int a, int b): AVLNode() {
     to = b;
 }
 
-void EdgeNode::recount_nontree_cnt(int dx) {
+void EdgeNode::recount_nontree_cnt() {
     nontree_cnt = 0;
-    if (left) nontree_cnt += left->nontree_cnt;
-    if (right) nontree_cnt += right->nontree_cnt;
+    if (left) nontree_cnt += left->get_nontree_cnt();
+    if (right) nontree_cnt += right->get_nontree_cnt();
+}
+
+int EdgeNode::get_num_nontree_edges() {
+    return 0;
 }
 
 ETTForest::ETTForest(int n) {
@@ -208,8 +272,8 @@ void ETTForest::insert_tree_edge(int a, int b) {
     EdgeNode *ba_edge = new EdgeNode(b,a);
     AVLNode *b_tree;
 
-    TEdgeHooks[{a,b}] = ab_edge;
-    TEdgeHooks[{b,a}] = ba_edge;
+    TEdgeHooks[edge_id(a,b)] = ab_edge;
+    TEdgeHooks[edge_id(b,a)] = ba_edge;
 
     auto [left_a, right_a] = Vertices[a].split();
     auto [left_b, right_b] = Vertices[b].split();
@@ -218,33 +282,61 @@ void ETTForest::insert_tree_edge(int a, int b) {
     b_tree = AVLNode::merge(right_b, left_b);
 
     // insert the edge:
-    b_tree = AVLNode::merge(ab_edge, merge(b_tree, ba_edge));
+    b_tree = AVLNode::merge(ab_edge, AVLNode::merge(b_tree, ba_edge));
 
     // merge the Euler tours:
-    AVLNode::merge(left_a, merge(b_tree, right_a));
+    AVLNode::merge(left_a, AVLNode::merge(b_tree, right_a));
+}
+
+void ETTForest::remove_tree_edge(int a, int b) {
+    pair<AVLNode*, AVLNode*> subtrees;
+    AVLNode *left, *right;
+    EdgeNode *ab_edge = TEdgeHooks[edge_id(a,b)];
+    EdgeNode *ba_edge = TEdgeHooks[edge_id(b,a)];
+    TEdgeHooks.erase(edge_id(a,b));
+    TEdgeHooks.erase(edge_id(b,a));
+
+    subtrees = ab_edge->split();
+    if (subtrees.first == ba_edge->root()) {
+        right = subtrees.second;
+        subtrees = ba_edge->split();
+        left = subtrees.first;
+
+    } else {
+        left = subtrees.first;
+        subtrees = ba_edge->split();
+        right = subtrees.second;
+    }
+
+    AVLNode::merge(left, right);
+
+    ab_edge->remove();
+    ba_edge->remove();
+    delete ab_edge;
+    delete ba_edge;
 }
 
 void ETTForest::insert_nontree_edge(int a, int b) {
-    NTEdgeHooks[{a,b}] = Vertices[a].push_nontree_edge(b);
-    NTEdgeHooks[{b,a}] = Vertices[b].push_nontree_edge(a);
+    NTEdgeHooks[edge_id(a,b)] = Vertices[a].push_nontree_edge(b);
+    NTEdgeHooks[edge_id(b,a)] = Vertices[b].push_nontree_edge(a);
 }
 
 void ETTForest::remove_nontree_edge(int a, int b) {
-    Vertices[a].erase_nontree_edge(NTEdgeHooks[{a,b}]);
-    Vertices[b].erase_nontree_edge(NTEdgeHooks[{b,a}]);
-    NTEdgeHooks.erase({a,b});
-    NTEdgeHooks.erase({b,a});
+    Vertices[a].erase_nontree_edge(NTEdgeHooks[edge_id(a,b)]);
+    Vertices[b].erase_nontree_edge(NTEdgeHooks[edge_id(b,a)]);
+    NTEdgeHooks.erase(edge_id(a,b));
+    NTEdgeHooks.erase(edge_id(b,a));
 }
 
 bool ETTForest::pop_nontree_edge(int a, pair <int, int> &edge) {
-    NodeAVL *root = Vertices[a].root();
+    AVLNode *root = Vertices[a].root();
 
     if (!root->pop_nontree_edge(edge))
         return false;
 
-    Vertices[edge.second].erase_nontree_edge(NTEdgeHooks[{edge.second, edge.first}]);
-    NTEdgeHooks.erase({edge.first, edge.second});
-    NTEdgeHooks.erase({edge.second, edge.first});
+    Vertices[edge.second].erase_nontree_edge(NTEdgeHooks[edge_id(edge.second, edge.first)]);
+    NTEdgeHooks.erase(edge_id(edge.first, edge.second));
+    NTEdgeHooks.erase(edge_id(edge.second, edge.first));
 
     return true;
 }
@@ -254,9 +346,23 @@ bool ETTForest::connected(int a, int b) {
 }
 
 bool ETTForest::is_tree_edge(int a, int b) {
-    return TEdgeHooks.count({a,b}) > 0;
+    return TEdgeHooks.count(edge_id(a,b)) > 0;
 }
 
 int ETTForest::size(int a) {
     return Vertices[a].root()->size;
+}
+
+int64_t ETTForest::edge_id(int a, int b) {
+    return int64_t(a) << 32 | b;
+}
+
+bool ETTForest::correct() {    
+    for (AVLNode &node: Vertices) {
+        AVLNode *root = node.root();
+
+        if (!root->correct_tree(nullptr))
+            return false;
+    }
+    return true;
 }

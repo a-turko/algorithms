@@ -1,39 +1,55 @@
+#include <unordered_map>
+#include <map>
+#include <list>
+#include <vector>
+#include <cstdint>
 using namespace std;
 
-virtual class AVLNode {
+class AVLNode {
     public:
     unsigned int size;
 
     AVLNode();
+    virtual ~AVLNode() {};
 
     pair <AVLNode*, AVLNode*> split();
     void remove();
     static AVLNode *merge(AVLNode *left, AVLNode *right);
     AVLNode *root();
     bool pop_nontree_edge(pair <int, int> &edge);
+    unsigned int get_nontree_cnt();
+    virtual int get_num_nontree_edges() {return 0;}
+    bool correct_tree(AVLNode *parent);
 
     private:
-    AVLNode *left, *right, *parent;
     unsigned int height;
-    unsigned int nontree_cnt;
 
-    void local_update();
-    void update_nontree_cnt(int dx);
+    void update_statistics();
+    void unlink_children();
     virtual void recount_nontree_cnt() {};
-}
 
-class EdgeNode : private AVLNode {
+    protected:
+    unsigned int nontree_cnt;
+    void update_nontree_cnt(int dx);
+    AVLNode *left, *right, *parent;
+};
+
+class EdgeNode : public AVLNode {
     public:
-        int from, to;
+    int from, to;
     
+    EdgeNode(int from, int to);
+
     private:
         void recount_nontree_cnt();
-}
+        int get_num_nontree_edges();
+};
 
-class VertexNode: private AVLNode {
+class VertexNode: public AVLNode {
     public:
-        int idx;
+    int idx;
 
+    VertexNode(int idx);
     bool pop_nontree_edge(pair <int, int> &edge);
     list<int>::iterator push_nontree_edge(int to);
     void erase_nontree_edge(list<int>::iterator it);
@@ -42,7 +58,8 @@ class VertexNode: private AVLNode {
         list<int> NTEdges;
     
     void recount_nontree_cnt();
-}
+    int get_num_nontree_edges();
+};
 
 class ETTForest {
     public:
@@ -57,11 +74,12 @@ class ETTForest {
     bool is_tree_edge(int a, int b);
     bool pop_nontree_edge(int a, pair <int, int> &edge);
     int size(int a);
+    bool correct();
 
     private:
-    unordered_map <pair <int, int>, list<EdgeNode*>::iterator> TEdgeHooks;
-    unordered_map <pair <int, int>, list<int>::iterator> NTEdgeHooks;
+    unordered_map <int64_t, EdgeNode*> TEdgeHooks;
+    unordered_map <int64_t, list<int>::iterator> NTEdgeHooks;
     vector <VertexNode> Vertices;
 
-    void recount_nontree_cnt();
+    static int64_t edge_id(int a, int b);
 };
