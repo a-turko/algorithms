@@ -3,7 +3,10 @@
 #include <list>
 #include <vector>
 #include <cstdint>
+#include <cstdio>
 using namespace std;
+
+#define debug(...) fprintf(stderr, __VA_ARGS__), fflush(stderr)
 
 class AVLNode {
     public:
@@ -13,9 +16,9 @@ class AVLNode {
     virtual ~AVLNode() {};
 
     pair <AVLNode*, AVLNode*> split();
-    void remove();
     static AVLNode *merge(AVLNode *left, AVLNode *right);
     AVLNode *root();
+    void unlink();
     bool pop_nontree_edge(pair <int, int> &edge);
     bool promote_tree_edge(pair <int, int> &edge);
     bool find_replacement(int a, int level, pair <int, int> &replacement);
@@ -25,8 +28,7 @@ class AVLNode {
     private:
     unsigned int height;
 
-    void update_statistics();
-    void unlink_children();
+
     virtual void recount_nontree_cnt() {};
     virtual int get_num_nontree_edges() {return 0;}
     virtual bool is_on_level() {return false;}
@@ -36,6 +38,8 @@ class AVLNode {
     unsigned int on_level_cnt;
     void update_nontree_cnt(int dx);
     void update_on_level_cnt(int dx);
+    void update_statistics();
+    void unlink_children();
     AVLNode *left, *right, *parent;
 };
 
@@ -74,6 +78,7 @@ class ETTForest {
     public:
 
     ETTForest(int n);
+    ~ETTForest();
 
     void insert_nontree_edge(int a, int b);
     void insert_tree_edge(int a, int b, bool on_level);

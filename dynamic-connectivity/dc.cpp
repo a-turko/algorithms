@@ -18,7 +18,7 @@ DynamicConnectivity::DynamicConnectivity(int n) {
  * 
  * Complexity: O(log n)
  * 
- * Extra amortization cost: O(log^2 n), because an edge is inserted
+ * Extra amortization cost: O(log^2 n), because a new edge is inserted
 */
 void DynamicConnectivity::insert(int a, int b) {
 
@@ -28,19 +28,19 @@ void DynamicConnectivity::insert(int a, int b) {
 }
 
 /**
- * Inserts an unique (a,b) edge to the graph with level 0.
+ * Inserts an unique (a,b) edge to the graph with the given level
  * 
  * If a and b are not connected, it's added to the forest.
  * Otherwise it is added to the list of nontree edges to be
  * accessed later when we'll be looking for replacement edges.
  * 
- * Complexity: O(log^2 n)
+ * Complexity: O((level+1) * log n) -- O(log^2 n)
 */
 void DynamicConnectivity::insert_edge(int a, int b, int level) {
 
     EdgeLevels[ordered_pair(a,b)] = level;
 
-    if (Forests[level].connected(a,b)) {
+    if (!Forests[level].connected(a,b)) {
 
         for (int l = 0; l <= level; l++)
             Forests[l].insert_tree_edge(a, b, (level == l));

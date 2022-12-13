@@ -136,7 +136,7 @@ AVLNode *AVLNode::merge(AVLNode *left, AVLNode *right) {
     }
 }
 
-void AVLNode::remove() {
+void AVLNode::unlink() {
     AVLNode *left_child, *right_child, *subtree;
 
     left_child = left;
@@ -314,6 +314,12 @@ ETTForest::ETTForest(int n) {
     }
 }
 
+ETTForest::~ETTForest() {
+    for (auto edge: TEdgeHooks) {
+        delete edge.second;
+    }
+}
+
 void ETTForest::insert_tree_edge(int a, int b, bool on_level) {
     EdgeNode *ab_edge = new EdgeNode(a,b, on_level);
     EdgeNode *ba_edge = new EdgeNode(b,a, on_level);
@@ -357,8 +363,8 @@ void ETTForest::remove_tree_edge(int a, int b) {
 
     AVLNode::merge(left, right);
 
-    ab_edge->remove();
-    ba_edge->remove();
+    ab_edge->unlink();
+    ba_edge->unlink();
     delete ab_edge;
     delete ba_edge;
 }
