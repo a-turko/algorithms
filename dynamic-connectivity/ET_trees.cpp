@@ -183,8 +183,10 @@ bool AVLNode::correct_tree(AVLNode *correct_parent) {
     unsigned int correct_nontree_cnt = get_num_nontree_edges();
     unsigned int correct_on_level_cnt = is_on_level() ? 1 : 0;
 
-    if (parent != correct_parent)
+    if (parent != correct_parent) {
+        debug ("parent does not match\n");
         return false;
+    }
 
     if (left) {
         if (left->correct_tree(this))
@@ -195,12 +197,16 @@ bool AVLNode::correct_tree(AVLNode *correct_parent) {
         correct_nontree_cnt += left->nontree_cnt;
         correct_on_level_cnt += left->on_level_cnt;
 
-        if (left->height < height - 2)
+        if (left->height < height - 2) {
+            debug ("height invariant violated\n");
             return false;
+        }
 
     } else {
-        if (height > 2)
+        if (height > 2) {
+            debug ("height invariant violated\n");
             return false;
+        }
     }
     
     if (right) {
@@ -212,25 +218,37 @@ bool AVLNode::correct_tree(AVLNode *correct_parent) {
         correct_nontree_cnt += right->nontree_cnt;
         correct_on_level_cnt += right->on_level_cnt;
 
-        if (right->height < height - 2)
+        if (right->height < height - 2) {
+            debug ("height invariant violated\n");
             return false;
+        }
 
     } else {
-        if (height > 2)
+        if (height > 2) {
+            debug ("height invariant violated\n");
             return false;
+        }
     }
 
-    if (correct_height != height)
+    if (correct_height != height) {
+        debug ("height does not match\n");
         return false;
+    }
     
-    if (correct_size != size)
+    if (correct_size != size) {
+        debug ("size does not match\n");
         return false;
+    }
 
-    if (correct_nontree_cnt != nontree_cnt)
+    if (correct_nontree_cnt != nontree_cnt) {
+        debug ("nontree_cnt does not match\n");
         return false;
+    }
     
-    if (correct_on_level_cnt != on_level_cnt)
+    if (correct_on_level_cnt != on_level_cnt) {
+        debug ("on_level_cnt does not match\n");
         return false;
+    }
     
     return true;
 }
@@ -416,9 +434,10 @@ int ETTForest::size(int a) {
     return Vertices[a].root()->size;
 }
 
-bool ETTForest::correct() {    
-    for (AVLNode &node: Vertices) {
+bool ETTForest::correct() {
+    for (VertexNode &node: Vertices) {
         AVLNode *root = node.root();
+        debug ("Test vertex %d:\n", node.idx);
 
         if (!root->correct_tree(nullptr))
             return false;
