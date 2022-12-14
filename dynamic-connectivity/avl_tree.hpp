@@ -25,10 +25,10 @@ class AVLNode {
     private:
     unsigned int height;
 
-
     virtual void recount_nontree_cnt() {};
     virtual int get_num_nontree_edges() {return 0;}
     virtual bool is_on_level() {return false;}
+    void balance();
 
     protected:
     unsigned int nontree_cnt;
@@ -37,6 +37,8 @@ class AVLNode {
     void update_on_level_cnt(int dx);
     void update_statistics();
     void unlink_children();
+    AVLNode *rotate_left();
+    AVLNode *rotate_right();
     AVLNode *left, *right, *parent;
 };
 

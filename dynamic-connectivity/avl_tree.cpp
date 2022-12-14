@@ -1,3 +1,4 @@
+#include <cassert>
 #include "avl_tree.hpp"
 
 AVLNode::AVLNode() {
@@ -171,6 +172,82 @@ bool AVLNode::promote_tree_edge(pair <int, int> &edge) {
 
 unsigned int AVLNode::get_nontree_cnt() {
     return nontree_cnt;
+}
+
+AVLNode* AVLNode::rotate_right() {
+    assert(left != NULL and left->left != NULL and left->right != NULL);
+
+    AVLNode *left_child = left;
+
+    this->parent = left_child;
+    left_child->right = this;
+
+    this->left = left_child->right;
+    left_child->right->parent = this;
+    
+    this->update_statistics();
+    left_child->update_statistics();
+
+    return left_child;
+}
+
+AVLNode* AVLNode::rotate_left() {
+    assert(right != NULL and right->left != NULL and right->right != NULL);
+
+    AVLNode *right_child = right;
+
+    this->parent = right_child;
+    right_child->left = this;
+
+    this->right = right_child->left;
+    right_child->left->parent = this;
+    
+    this->update_statistics();
+    right_child->update_statistics();
+
+    return right_child;
+}
+
+void AVLNode::balance() {
+
+    unsigned int hl = left ? left->height : 0;
+    unsigned int hr = right ? right->height : 0;
+    // root and parent node of the subtree that is being balanced
+    AVLNode *root, *parent_node = parent;
+
+    if (hl == hr + 2) {
+        unsigned int hll = left->left ? left->left->height : 0;
+        unsigned int hlr = left->right ? left->right->height : 0;
+
+        if (hll >= hlr) {
+            root = this->rotate_right();
+        } else {
+            left = left->rotate_left();
+            root = this->rotate_right();
+        }
+    } else if (hr == hl + 2) {
+        unsigned int hrr = right->right ? right->right->height : 0;
+        unsigned int hrl = right->left ? right->left->height : 0;
+
+        if (hrr >= hrl) {
+            root = this->rotate_left();
+        } else {
+            right = right->rotate_right();
+            root = this->rotate_left();
+        }
+    }
+
+    if (parent_node) {
+        if (parent_node->left == this) {
+            parent_node->left = root;
+        } else {
+            parent_node->right = root;
+        }
+    }
+
+    if (height != max(hl, hr) + 1 and parent_node) {
+        parent_node->balance();
+    }
 }
 
 bool AVLNode::correct_tree(AVLNode *correct_parent) {
