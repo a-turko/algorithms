@@ -1,6 +1,5 @@
 #include <bits/stdc++.h>
 #include "dc.hpp"
-using namespace std;
 
 static pair <int, int> ordered_pair(int a, int b) {
     return {min(a,b), max(a,b)};

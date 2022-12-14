@@ -3,7 +3,7 @@ CXX= g++
 SANITIZE= -fsanitize=address -fsanitize=undefined -static-libasan
 OPTIMIZE= -O3
 
-objects=ET_trees.o ET_trees.san.o dc.o dc.san.o test.o test.san.o
+objects=et_trees.o et_trees.san.o dc.o dc.san.o test.o test.san.o
 executables=test
 
 default: all
@@ -16,8 +16,8 @@ all: $(executables)
 %.san.o: %.cpp
 	$(CXX) -c $(CXXFLAGS) $(SANITIZE) $< -o $@
 
-test: test.san.o dc.san.o ET_trees.san.o
-	$(CXX) $(CXXFLAGS) $(SANITIZE) test.san.o dc.san.o ET_trees.san.o -o $@
+test: test.san.o dc.san.o et_trees.san.o avl_tree.san.o
+	$(CXX) $(CXXFLAGS) $(SANITIZE) test.san.o dc.san.o avl_tree.san.o et_trees.san.o -o $@
 
 clean:
 	rm -f $(objects) $(executables)

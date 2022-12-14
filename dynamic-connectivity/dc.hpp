@@ -1,6 +1,6 @@
 #include <vector>
 #include <map>
-#include "ET_trees.hpp"
+#include "et_trees.hpp"
 using namespace std;
 
 class DynamicConnectivity {
