@@ -29,6 +29,8 @@ ETTForest::~ETTForest() {
 #define show_tree(x) {debug ("\n");if (x) x->print_tree(); else debug("(empty)\n");}
 
 void ETTForest::insert_tree_edge(int a, int b, bool on_level) {
+    debug ("Insert tree edge (%d %d)\n", a, b);
+    
     EdgeNode *ab_edge = new EdgeNode(a,b, on_level);
     EdgeNode *ba_edge = new EdgeNode(b,a, on_level);
 
@@ -39,10 +41,10 @@ void ETTForest::insert_tree_edge(int a, int b, bool on_level) {
     auto [left_b, right_b] = Vertices[b].split();
 
     debug ("Insert tree edge (%d %d)\n", a, b);
-   show_tree(left_a);
-   show_tree(right_a);
-   show_tree(left_b);
-   show_tree(right_b);
+    show_tree(left_a);
+    show_tree(right_a);
+    show_tree(left_b);
+    show_tree(right_b);
     
 
     //TODO: describe the order of the euler tour
@@ -53,6 +55,8 @@ void ETTForest::insert_tree_edge(int a, int b, bool on_level) {
 }
 
 void ETTForest::remove_tree_edge(int a, int b) {
+    debug ("Remove tree edge (%d %d)\n", a, b);
+
     EdgeNode *ab_edge = TEdgeHooks[edge_id(a,b)];
     EdgeNode *ba_edge = TEdgeHooks[edge_id(b,a)];
     TEdgeHooks.erase(edge_id(a,b));
@@ -64,6 +68,8 @@ void ETTForest::remove_tree_edge(int a, int b) {
         AVLNode::merge(ll, NULL, r);
 
     } else {
+        assert(r == ba_edge->root());
+
         auto [rl, rr] = ba_edge->split();
         AVLNode::merge(l, NULL, rr);
     }
@@ -127,21 +133,28 @@ bool ETTForest::correct() {
     set<AVLNode *> processed;
     for (VertexNode &node: Vertices) {
 
-        debug ("Test vertex %d:\n", node.idx);
-        //node.print_node();
+        debug ("Test vertex %d: \n", node.idx);
 
         AVLNode *root = node.root();
 
-        if (processed.count(root) > 0)
+        if (processed.count(root) > 0) {
+            debug ("Already processed\n");
             continue;
+        }
         processed.insert(root);
         
-
+        debug ("Root: %p\n", (void*)root);
         root->print_tree();
-        debug ("Printed\n");
-        if (!root->correct_tree(nullptr))
+        if (!root->correct_tree(nullptr)) {
+
+            debug ("My missing edge:)");
+
+            auto edge = TEdgeHooks[edge_id(0, 1)];
+            debug ("Edge: %d %d\n", edge->from, edge->to);
+            edge->root()->print_tree();
+
             return false;
-        debug ("Correct tree done\n");
+        }
     }
     return true;
 }

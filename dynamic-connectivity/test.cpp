@@ -148,11 +148,14 @@ bool verify_execution(int n, vector <pair <char, pair <int, int> > > test) {
 int main()
 {
     assert(verify_execution(3, {{'I', {0, 1}}, {'I', {1, 2}}, {'Q', {0, 2}}}));
+    
     assert(check_correctness(3, {{'I', {0, 1}}, {'I', {1, 2}}, {'Q', {0, 2}}}));
     assert(verify_execution(3, {{'I', {0, 1}}, {'I', {1, 2}}, {'Q', {0, 2}}}));
 
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 10; i++) {
+        assert(verify_execution(5, gen_test(5, 10, i)));
         assert(check_correctness(5, gen_test(5, 10, i)));
+    }
 
     assert(check_correctness(100, gen_test(100, 1000, 0)));
     assert(check_correctness(100, gen_test(100, 1000, 3)));
