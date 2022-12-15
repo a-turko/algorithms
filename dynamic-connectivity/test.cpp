@@ -122,9 +122,14 @@ bool check_correctness(int n, vector <pair <char, pair <int, int> > > test) {
 bool verify_execution(int n, vector <pair <char, pair <int, int> > > test) {
     DynamicConnectivity DC(n);
     int idx = 0;
+
+    debug("\nCheck the empty graph:\n");
+    if (!DC.correct())
+        return false;
+
     for (auto p: test) {
         idx++;
-        debug("Executing %c %d %d (id %d)\n", p.first, p.second.first, p.second.second, idx);
+        debug("\nExecuting %c %d %d (id %d)\n", p.first, p.second.first, p.second.second, idx);
         
         if (p.first == 'I')
             DC.insert(p.second.first, p.second.second);

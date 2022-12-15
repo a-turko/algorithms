@@ -4,18 +4,22 @@
 
 AVLNode::AVLNode() {
     left = right = parent = NULL;
-    update_statistics();
+    height = 1;
+    size = 0;
+    nontree_cnt = 0;
+    on_level_cnt = 0;
 }
 
 VertexNode::VertexNode(int i) {
     idx = i;
+    size = 1;
 }
 
 EdgeNode::EdgeNode(int _from, int _to, bool _on_level) {
     from = _from;
     to = _to;
     on_level = _on_level;
-    update_statistics();
+    on_level_cnt = _on_level ? 1 : 0;
 }
 
 // BST operations:
@@ -130,8 +134,8 @@ AVLNode *AVLNode::merge(AVLNode *left, AVLNode *middle, AVLNode *right) {
         right->left->parent = right;
 
         right->update_statistics();
-        right->balance();
-        return right;
+        
+        return right->balance();
 
     } else { // left->height > right->height
 
@@ -142,8 +146,7 @@ AVLNode *AVLNode::merge(AVLNode *left, AVLNode *middle, AVLNode *right) {
         left->right->parent = left;
 
         left->update_statistics();
-        left->balance();
-        return left;
+        return left->balance();
     }
 }
 
@@ -208,7 +211,7 @@ AVLNode* AVLNode::rotate_right() {
     lr_node->parent = this;
     
     this->update_statistics();
-    lr_node->update_statistics();
+    l_node->update_statistics();
 
     return l_node;
 }
@@ -225,12 +228,12 @@ AVLNode* AVLNode::rotate_left() {
     rl_node->parent = this;
     
     this->update_statistics();
-    rl_node->update_statistics();
+    r_node->update_statistics();
 
     return r_node;
 }
 
-void AVLNode::balance() {
+AVLNode* AVLNode::balance() {
 
     int hl = left ? left->height : 0;
     int hr = right ? right->height : 0;
@@ -270,41 +273,8 @@ void AVLNode::balance() {
     root->parent = parent_node;
     if (parent_node)
         parent_node->replace_child(this, root);
-}
-
-void AVLNode::deconstruct_tree(AVLNode *node, vector <AVLNode*> &node_list) {
-
-    if (node == NULL)
-        return;
     
-    deconstruct_tree(node->left, node_list);
-    
-    if (dynamic_cast<DummyNode*>(node) == NULL)
-        node_list.push_back(node);
-
-    deconstruct_tree(node->right, node_list);
-
-    if (dynamic_cast<DummyNode*>(node) != NULL)
-        delete node;
-}
-
-AVLNode* AVLNode::build_avl(vector<AVLNode*>::iterator begin, vector <AVLNode*>::iterator end) {
-    if (begin == end)
-        return NULL;
-    
-    int n = end - begin;
-    auto mid = begin + (n/2);
-
-    (*mid)->left = build_avl(begin, mid);
-    (*mid)->right = build_avl(mid+1, end);
-    
-    if ((*mid)->left)
-        (*mid)->left->parent = (*mid);
-    if ((*mid)->right)
-        (*mid)->right->parent = (*mid);
-    
-    (*mid)->update_statistics();
-    return (*mid);
+    return root;
 }
 
 // Getters for subclass specific fields
@@ -317,6 +287,10 @@ bool AVLNode::is_on_level() {
     return false;
 }
 
+bool VertexNode::is_on_level() {
+    return AVLNode::is_on_level();
+}
+
 int AVLNode::get_num_nontree_edges() {
     return 0;
 }
@@ -325,11 +299,15 @@ int VertexNode::get_num_nontree_edges() {
     return NTEdges.size();
 }
 
+int EdgeNode::get_num_nontree_edges() {
+    return AVLNode::get_num_nontree_edges();
+}
+
 // Manage data stored in the nodes
 
 void AVLNode::update_statistics() {
     height = 1;
-    size = dynamic_cast<VertexNode*>(this) ? 0 : 1;
+    size = dynamic_cast<VertexNode*>(this) ? 1 : 0;
     on_level_cnt = is_on_level() ? 1 : 0;
     nontree_cnt = get_num_nontree_edges();
 
@@ -383,6 +361,10 @@ bool VertexNode::pop_nontree_edge(pair <int, int> &edge) {
     return true;
 }
 
+bool EdgeNode::pop_nontree_edge(pair <int, int> &edge) {
+    return AVLNode::pop_nontree_edge(edge);
+}
+
 void VertexNode::erase_nontree_edge(list<int>::iterator it) {
     NTEdges.erase(it);
     update_nontree_cnt(-1);
@@ -407,10 +389,14 @@ bool EdgeNode::promote_tree_edge(pair <int, int> &edge) {
     return AVLNode::promote_tree_edge(edge);
 }
 
+bool VertexNode::promote_tree_edge(pair <int, int> &edge) {
+    return AVLNode::promote_tree_edge(edge);
+}
+
 
 bool AVLNode::correct_tree(AVLNode *correct_parent) {
     int correct_height = 1;
-    unsigned int correct_size = dynamic_cast<VertexNode*>(this) ? 0 : 1;
+    unsigned int correct_size = dynamic_cast<VertexNode*>(this) ? 1 : 0;
     unsigned int correct_nontree_cnt = get_num_nontree_edges();
     unsigned int correct_on_level_cnt = is_on_level() ? 1 : 0;
 

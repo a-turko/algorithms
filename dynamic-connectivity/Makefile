@@ -3,7 +3,7 @@ CXX= g++
 SANITIZE= -fsanitize=address -fsanitize=undefined -static-libasan
 OPTIMIZE= -O3
 
-objects=et_trees.o et_trees.san.o dc.o dc.san.o test.o test.san.o
+objects=et_trees.o et_trees.san.o avl_trees.san.o avl_trees.o dc.o dc.san.o test.o test.san.o
 executables=test
 
 default: all

@@ -21,15 +21,6 @@ ETTForest::~ETTForest() {
     set <AVLNode *> processed;
     vector <AVLNode *> unused;
 
-    for (auto &vtex: Vertices) {
-        AVLNode *root = vtex.root();
-        if (processed.count(root) == 0) {
-            processed.insert(root);
-
-            AVLNode::deconstruct_tree(root, unused);
-        }
-    }
-
     for (auto edge: TEdgeHooks) {        
         delete edge.second;
     }
@@ -72,21 +63,6 @@ void ETTForest::remove_tree_edge(int a, int b) {
     ba_edge->erase();
     delete ab_edge;
     delete ba_edge;
-}
-
-void ETTForest::rebuild_trees() {
-    set <AVLNode*> roots;
-    for (AVLNode &vertex: Vertices)
-        roots.insert(vertex.root());
-    
-    for (AVLNode *root: roots) {
-        vector <AVLNode *> nodes;
-        AVLNode::deconstruct_tree(root, nodes);
-        AVLNode::build_avl(nodes.begin(), nodes.end());
-    }
-
-    // all dummy nodes have been freed
-    dummy_node_credits = 0;
 }
 
 void ETTForest::insert_nontree_edge(int a, int b) {
@@ -142,6 +118,7 @@ bool ETTForest::correct() {
         AVLNode *root = node.root();
         debug ("Test vertex %d:\n", node.idx);
 
+        root->print_tree();
         if (!root->correct_tree(nullptr))
             return false;
     }
