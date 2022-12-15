@@ -5,10 +5,9 @@ OPTIMIZE= -O3
 
 objects=et_trees.o et_trees.san.o avl_tree.san.o avl_tree.o dc.o dc.san.o test.o test.san.o
 executables=test
+submissions=cf_a_standalone.cpp
 
-
-
-default: all
+default: test
 
 all: $(executables)
 
@@ -27,5 +26,8 @@ test.san.o: test.cpp
 test: test.san.o dc.san.o et_trees.san.o avl_tree.san.o
 	$(CXX) $(CXXFLAGS) $(SANITIZE) $^ -o $@
 
+cf_a: cf_a.cpp
+	$(CXX) $(CXXFLAGS) -E $< -o cf_a_standalone.cpp
+	$(CXX) $(CXXFLAGS) $(SANITIZE) cf_a_standalone.cpp -o cf_a
 clean:
-	rm -f $(objects) $(executables)
+	rm -f $(objects) $(executables) $(submissions)

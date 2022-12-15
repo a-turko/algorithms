@@ -29,8 +29,6 @@ ETTForest::~ETTForest() {
 #define show_tree(x) {debug ("\n");if (x) x->print_tree(); else debug("(empty)\n");}
 
 void ETTForest::insert_tree_edge(int a, int b, bool on_level) {
-    debug ("Insert tree edge (%d %d)\n", a, b);
-    
     EdgeNode *ab_edge = new EdgeNode(a,b, on_level);
     EdgeNode *ba_edge = new EdgeNode(b,a, on_level);
 
@@ -40,11 +38,11 @@ void ETTForest::insert_tree_edge(int a, int b, bool on_level) {
     auto [left_a, right_a] = Vertices[a].split();
     auto [left_b, right_b] = Vertices[b].split();
 
-    debug ("Insert tree edge (%d %d)\n", a, b);
+    /*debug ("Insert tree edge (%d %d)\n", a, b);
     show_tree(left_a);
     show_tree(right_a);
     show_tree(left_b);
-    show_tree(right_b);
+    show_tree(right_b);*/
     
 
     //TODO: describe the order of the euler tour
@@ -144,15 +142,8 @@ bool ETTForest::correct() {
         processed.insert(root);
         
         debug ("Root: %p\n", (void*)root);
-        root->print_tree();
+        //root->print_tree();
         if (!root->correct_tree(nullptr)) {
-
-            debug ("My missing edge:)");
-
-            auto edge = TEdgeHooks[edge_id(0, 1)];
-            debug ("Edge: %d %d\n", edge->from, edge->to);
-            edge->root()->print_tree();
-
             return false;
         }
     }

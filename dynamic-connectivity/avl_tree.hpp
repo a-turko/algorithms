@@ -1,3 +1,6 @@
+#ifndef AVL_TREE_HPP
+#define AVL_TREE_HPP
+
 #include <cstdio>
 #include <utility>
 #include <list>
@@ -5,7 +8,7 @@
 #include <cassert>
 using namespace std;
 
-#define debug(...) fprintf(stderr, __VA_ARGS__), fflush(stderr)
+#define debug(...) {} //fprintf(stderr, __VA_ARGS__), fflush(stderr)
 
 class AVLNode {
     public:
@@ -104,3 +107,5 @@ class VertexNode: public AVLNode {
     int get_num_nontree_edges();
     bool is_on_level();
 };
+
+#endif

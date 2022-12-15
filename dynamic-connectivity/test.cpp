@@ -4,7 +4,7 @@
 #include <set>
 #include <queue>
 #include "dc.hpp"
-#define debug(...) fprintf(stderr, __VA_ARGS__), fflush(stderr)
+#define debug(...) {} //fprintf(stderr, __VA_ARGS__), fflush(stderr)
 using namespace std;
 
 class NaiveConnectivity {
@@ -153,8 +153,8 @@ int main()
     assert(verify_execution(3, {{'I', {0, 1}}, {'I', {1, 2}}, {'Q', {0, 2}}}));
 
     for (int i = 0; i < 10; i++) {
-        assert(verify_execution(5, gen_test(5, 10, i)));
-        assert(check_correctness(5, gen_test(5, 10, i)));
+        assert(verify_execution(500, gen_test(500, 10000, i)));
+        assert(check_correctness(500, gen_test(500, 10000, i)));
     }
 
     assert(check_correctness(100, gen_test(100, 1000, 0)));

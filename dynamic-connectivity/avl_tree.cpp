@@ -2,7 +2,7 @@
 #include <cstdlib>
 #include "avl_tree.hpp"
 
-#define show_tree(x) {debug ("%s: %p\n", #x, (void *)x);if (x) x->print_tree(); else debug("(empty)\n");}
+#define show_tree(x) {} //{debug ("%s: %p\n", #x, (void *)x);if (x) x->print_tree(); else debug("(empty)\n");}
 #define segfault {int __cnt[4]; __cnt[4] = 0;}
 
 AVLNode::AVLNode() {
@@ -88,7 +88,6 @@ pair <AVLNode*, AVLNode*> AVLNode::split() {
             left_tree = merge(left_child, cur, left_tree);
 
         } else {
-            show_tree(prv);
             right_tree = merge(right_tree, cur, right_child);
         }
     }
@@ -116,7 +115,7 @@ void AVLNode::replace_child(AVLNode *old_child, AVLNode *new_child) {
 
 AVLNode *AVLNode::merge(AVLNode *left, AVLNode *middle, AVLNode *right) {
 
-    if (middle == (void *) 0x606000001b20) {
+    /*
         debug ("\nmerge(0x%llx, 0x%llx, 0x%llx)\n", (long long)left, (long long)middle, (long long)right);
         show_tree(left);
         debug("------\n");
@@ -124,7 +123,7 @@ AVLNode *AVLNode::merge(AVLNode *left, AVLNode *middle, AVLNode *right) {
         debug("-----\n");
         show_tree(right);
         debug("\n");
-    }
+    */
 
     if (left == NULL) {
         if (middle == NULL) {
@@ -150,7 +149,6 @@ AVLNode *AVLNode::merge(AVLNode *left, AVLNode *middle, AVLNode *right) {
         right->parent = middle;
 
         middle->update_statistics();
-        if (middle == (void*) 0x606000001b20) show_tree(middle);
         return middle;
     }
     
