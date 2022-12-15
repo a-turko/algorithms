@@ -25,15 +25,17 @@ class AVLNode {
     bool correct_tree(AVLNode *correct_parent);
     void erase();
 
-    virtual void print_node() {
-        debug ("Node 0x%llx: size = %d, height = %d, nontree_cnt = %d, on_level_cnt = %d,\n parent = 0x%llx, left = 0x%llx, right = 0x%llx\n",
-        (long long) this, size, height, nontree_cnt, on_level_cnt, (long long) parent, (long long) left, (long long) right);
+    virtual void print_node(int indent = 0) {
+        static char spaces[] = "          ";
+        debug ("%sNode 0x%llx: size = %d, height = %d, nontree_cnt = %d, on_level_cnt = %d,\n %sparent = 0x%llx, left = 0x%llx, right = 0x%llx\n",
+        &spaces[max(0,10 - 2*indent)], (long long) this, size, height, nontree_cnt, on_level_cnt,
+        &spaces[max(0,10 - 2*indent)], (long long) parent, (long long) left, (long long) right);
     }
 
-    void print_tree() {
-        if (left) left->print_tree();
-        print_node();
-        if (right) right->print_tree();
+    void print_tree(int indent = 0) {
+        if (left) left->print_tree(indent+1);
+        print_node(indent);
+        if (right) right->print_tree(indent+1);
     }
 
 
@@ -66,9 +68,10 @@ class EdgeNode : public AVLNode {
     bool promote_tree_edge(pair <int, int> &edge);
     bool pop_nontree_edge(pair <int, int> &edge);
 
-    void print_node() {
-        debug("Edge (%d %d)\n", from, to);
-        AVLNode::print_node();
+    void print_node(int indent) {
+        static char spaces[] = "          ";
+        debug("%sEdge (%d %d)\n", &spaces[max(0, 10 - 2*indent)], from, to);
+        AVLNode::print_node(indent);
     }
 
     private:
@@ -88,9 +91,10 @@ class VertexNode: public AVLNode {
     void erase_nontree_edge(list<int>::iterator it);
     bool promote_tree_edge(pair <int, int> &edge);
 
-    void print_node() {
-        debug("Vertex %d\n", idx);
-        AVLNode::print_node();
+    void print_node(int indent = 0) {
+        static char spaces[] = "          ";
+        debug("%sVertex %d\n", &spaces[max(0, 10 - 2*indent)], idx);
+        AVLNode::print_node(indent);
     };
 
     private:

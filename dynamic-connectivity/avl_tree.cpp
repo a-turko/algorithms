@@ -100,8 +100,15 @@ void AVLNode::replace_child(AVLNode *old_child, AVLNode *new_child) {
     }
 }
 
+#define show_tree(x) {debug ("\n");if (x) x->print_tree(); else debug("(empty)\n");}
 
 AVLNode *AVLNode::merge(AVLNode *left, AVLNode *middle, AVLNode *right) {
+
+    debug ("\nmerge(0x%llx, 0x%llx, 0x%llx)\n", (long long)left, (long long)middle, (long long)right);
+    show_tree(left);
+    debug("------\n");
+    show_tree(right);
+    debug("\n");
 
     if (left == NULL) {
         if (middle == NULL) {
@@ -119,6 +126,7 @@ AVLNode *AVLNode::merge(AVLNode *left, AVLNode *middle, AVLNode *right) {
     }
 
     if (middle and abs(left->height - right->height) <= 1) {
+        debug ("Merge using middle (middle)\n");
 
         middle->left = left;
         middle->right = right;
@@ -126,32 +134,39 @@ AVLNode *AVLNode::merge(AVLNode *left, AVLNode *middle, AVLNode *right) {
         right->parent = middle;
 
         middle->update_statistics();
+        middle->print_tree();
         return middle;
     }
     
 
     if (left->height <= right->height) {
-
+        debug ("Classical merge (left->height <= right->height)\n");
         if (right->left)
             right->left->parent = NULL;
         
         right->left = merge(left, middle, right->left);
         right->left->parent = right;
+        debug ("\nback to merge(0x%llx, 0x%llx, 0x%llx)\n", (long long)left, (long long)middle, (long long)right);
 
         right->update_statistics();
         
-        return right->balance();
+        auto ret = right->balance();
+        show_tree(ret);
+        return ret;
 
     } else { // left->height > right->height
-
+        debug ("Classical merge (left->height > right->height)\n");
         if (left->right)
             left->right->parent = NULL;
         
         left->right = merge(left->right, middle, right);
         left->right->parent = left;
+        debug ("\nback to merge(0x%llx, 0x%llx, 0x%llx)\n", (long long)left, (long long)middle, (long long)right);
 
         left->update_statistics();
-        return left->balance();
+        auto ret = left->balance();
+        show_tree(ret);
+        return ret;
     }
 }
 
@@ -247,25 +262,37 @@ AVLNode* AVLNode::balance() {
     // root and parent node of the subtree that is being balanced
     AVLNode *root, *parent_node = parent;
 
-    assert(abs(hl - hr) <= 2);
+    if (abs(hl - hr) > 3) {
+        debug ("\nThis tree is problematic:\n");
+        print_tree();
+    }
+    assert(abs(hl - hr) <= 3);
 
-    if (hl == hr + 2) {
+    if (hl > hr + 1) {
         int hll = left->left ? left->left->height : 0;
         int hlr = left->right ? left->right->height : 0;
 
         if (hll >= hlr) {
             root = this->rotate_right();
+
+            if (root->right)
+                root->right = root->right->balance();
+
         } else {
             left = left->rotate_left();
             left->parent = this;
             root = this->rotate_right();
         }
-    } else if (hr == hl + 2) {
+    } else if (hr > hl + 1) {
         int hrr = right->right ? right->right->height : 0;
         int hrl = right->left ? right->left->height : 0;
 
         if (hrr >= hrl) {
             root = this->rotate_left();
+
+            if (root->left)
+                root->left = root->left->balance();
+
         } else {
             right = right->rotate_right();
             right->parent = this;

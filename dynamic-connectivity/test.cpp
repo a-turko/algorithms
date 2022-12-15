@@ -7,7 +7,6 @@
 #define debug(...) fprintf(stderr, __VA_ARGS__), fflush(stderr)
 using namespace std;
 
-
 class NaiveConnectivity {
     public:
     NaiveConnectivity(int n) {

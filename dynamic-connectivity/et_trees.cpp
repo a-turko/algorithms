@@ -26,7 +26,7 @@ ETTForest::~ETTForest() {
     }
 }
 
-#define show_tree(x) {debug ("Show a tree\n");if (x) x->print_tree(); else debug("(empty)\n");}
+#define show_tree(x) {debug ("\n");if (x) x->print_tree(); else debug("(empty)\n");}
 
 void ETTForest::insert_tree_edge(int a, int b, bool on_level) {
     EdgeNode *ab_edge = new EdgeNode(a,b, on_level);
@@ -39,10 +39,10 @@ void ETTForest::insert_tree_edge(int a, int b, bool on_level) {
     auto [left_b, right_b] = Vertices[b].split();
 
     debug ("Insert tree edge (%d %d)\n", a, b);
-   /*show_tree(left_a);
+   show_tree(left_a);
    show_tree(right_a);
    show_tree(left_b);
-   show_tree(right_b);*/
+   show_tree(right_b);
     
 
     //TODO: describe the order of the euler tour
