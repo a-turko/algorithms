@@ -7,7 +7,7 @@ using namespace std;
 class ETTForest {
     public:
 
-    ETTForest(int n);
+    ETTForest(int _n);
     ~ETTForest();
 
     void insert_nontree_edge(int a, int b);
@@ -25,4 +25,7 @@ class ETTForest {
     unordered_map <int64_t, EdgeNode*> TEdgeHooks;
     unordered_map <int64_t, list<int>::iterator> NTEdgeHooks;
     vector <VertexNode> Vertices;
+    int dummy_node_credits, logn, n;
+
+    void rebuild_trees();
 };

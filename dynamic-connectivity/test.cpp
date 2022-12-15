@@ -105,13 +105,13 @@ bool check_correctness(int n, vector <pair <char, pair <int, int> > > test) {
             bool nc = NC.connected(p.second.first, p.second.second);
             bool dc = DC.connected(p.second.first, p.second.second);
 
-            if (nc and !dc) {
+            if (!nc and dc) {
                 debug ("Error (od %d): %d %d are not connected (false positive)\n", idx, p.second.first, p.second.second);
                 return false;
             }
             
-            if (!nc and dc) {
-                debug ("Error (od %d): %d %d are connected (false negative)\n", idx, p.second.first, p.second.second);
+            if (nc and !dc) {
+                debug ("Error (op %d): %d %d are connected (false negative)\n", idx, p.second.first, p.second.second);
                 return false;
             }
         }
@@ -143,6 +143,7 @@ bool verify_execution(int n, vector <pair <char, pair <int, int> > > test) {
 
 int main()
 {
+    assert(verify_execution(3, {{'I', {0, 1}}, {'I', {1, 2}}, {'Q', {0, 2}}}));
     assert(check_correctness(3, {{'I', {0, 1}}, {'I', {1, 2}}, {'Q', {0, 2}}}));
     assert(verify_execution(3, {{'I', {0, 1}}, {'I', {1, 2}}, {'Q', {0, 2}}}));
     assert(verify_execution(5, gen_test(5, 10, 0)));

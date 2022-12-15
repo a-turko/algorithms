@@ -1,34 +1,39 @@
 #include <cstdio>
 #include <utility>
 #include <list>
+#include <vector>
 using namespace std;
 
 #define debug(...) fprintf(stderr, __VA_ARGS__), fflush(stderr)
 
 class AVLNode {
     public:
+    // number of vertex nodes in the subtree
     unsigned int size;
 
     AVLNode();
     virtual ~AVLNode() {};
 
     pair <AVLNode*, AVLNode*> split();
-    static AVLNode *merge(AVLNode *left, AVLNode *right);
+    static AVLNode *merge(AVLNode *left, AVLNode *middle, AVLNode *right);
+    static AVLNode *build_avl(vector <AVLNode*>::iterator begin, vector<AVLNode*>::iterator end);
     AVLNode *root();
-    void unlink();
     bool pop_nontree_edge(pair <int, int> &edge);
     bool promote_tree_edge(pair <int, int> &edge);
     bool find_replacement(int a, int level, pair <int, int> &replacement);
     unsigned int get_nontree_cnt();
-    bool correct_tree(AVLNode *parent);
+    bool correct_tree(AVLNode *correct_parent);
+    void erase();
+    static void deconstruct_tree(AVLNode *node, vector <AVLNode*> &node_list);
 
     private:
-    unsigned int height;
+    int height;
 
-    virtual void recount_nontree_cnt() {};
-    virtual int get_num_nontree_edges() {return 0;}
-    virtual bool is_on_level() {return false;}
     void balance();
+
+    int get_num_nontree_edges();
+    bool is_on_level();
+    void replace_child(AVLNode *old_child, AVLNode *new_child);
 
     protected:
     unsigned int nontree_cnt;
@@ -42,11 +47,13 @@ class AVLNode {
     AVLNode *left, *right, *parent;
 };
 
+class DummyNode : public AVLNode {};
+
 class EdgeNode : public AVLNode {
     public:
     int from, to;
     
-    EdgeNode(int a, int b, bool on_level);
+    EdgeNode(int _from, int _to, bool _on_level);
     bool promote_tree_edge(pair <int, int> &edge);
 
     private:

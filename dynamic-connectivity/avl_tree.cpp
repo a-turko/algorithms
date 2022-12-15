@@ -1,11 +1,36 @@
 #include <cassert>
+#include <cstdlib>
 #include "avl_tree.hpp"
 
 AVLNode::AVLNode() {
-    size = 1;
     left = right = parent = NULL;
-    height = 1;
-    nontree_cnt = 0;
+    update_statistics();
+}
+
+VertexNode::VertexNode(int i) {
+    idx = i;
+}
+
+EdgeNode::EdgeNode(int _from, int _to, bool _on_level) {
+    from = _from;
+    to = _to;
+    on_level = _on_level;
+    update_statistics();
+}
+
+// BST operations:
+
+void AVLNode::unlink_children() {
+    if (left) {
+        left->parent = NULL;
+        left = NULL;
+    }
+    if (right) {
+        right->parent = NULL;
+        right = NULL;
+    }
+
+    update_statistics();
 }
 
 AVLNode *AVLNode::root() {
@@ -14,6 +39,312 @@ AVLNode *AVLNode::root() {
         cur = cur->parent;
     }
     return cur;
+}
+
+pair <AVLNode*, AVLNode*> AVLNode::split() {
+    AVLNode *left_child, *right_child, *left_tree, *right_tree, *prv, *cur;
+
+    left_tree = left;
+    right_tree = right;
+    prv = this;
+    cur = parent;
+
+    prv->unlink_children();
+    prv->parent = NULL;
+
+    left_tree = merge(left_tree, prv, NULL);
+
+    while (cur != NULL) {
+        left_child = right_child = NULL;
+
+        if (cur->left == prv) {
+            left_child = cur->left;
+        } else {
+            right_child = cur->right;
+        }
+
+        prv = cur;
+        cur = cur->parent;
+        prv->unlink_children();
+        prv->parent = NULL;
+
+        if (left_child)
+            left_tree = merge(left_child, prv, left_tree);
+        
+        if (right_child)
+            right_tree = merge(right_tree, prv, right_child);
+
+    }
+
+    return {left_tree, right_tree};
+}
+
+void AVLNode::replace_child(AVLNode *old_child, AVLNode *new_child) {
+    if (left == old_child) {
+        left = new_child;
+
+    } else if (right == old_child) {
+        right = new_child;
+
+    } else {
+        assert(0);
+    }
+}
+
+
+AVLNode *AVLNode::merge(AVLNode *left, AVLNode *middle, AVLNode *right) {
+
+    if (left == NULL) {
+        if (middle == NULL) {
+            return right;
+        } else {
+            return merge(middle, NULL, right);
+        }
+    }
+    if (right == NULL) {
+        if (middle == NULL) {
+            return left;
+        } else {
+            return merge(left, NULL, middle);
+        }
+    }
+
+    if (middle and abs(left->height - right->height) <= 1) {
+
+        middle->left = left;
+        middle->right = right;
+        left->parent = middle;
+        right->parent = middle;
+
+        middle->update_statistics();
+        return middle;
+    }
+    
+
+    if (left->height <= right->height) {
+
+        if (right->left)
+            right->left->parent = NULL;
+        
+        right->left = merge(left, middle, right->left);
+        right->left->parent = right;
+
+        right->update_statistics();
+        right->balance();
+        return right;
+
+    } else { // left->height > right->height
+
+        if (left->right)
+            left->right->parent = NULL;
+        
+        left->right = merge(left->right, middle, right);
+        left->right->parent = left;
+
+        left->update_statistics();
+        left->balance();
+        return left;
+    }
+}
+
+void AVLNode::erase() {
+
+    // make sure that this node has at most one child
+    if (right) {
+        AVLNode *replacement = right;
+        while (replacement->left)
+            replacement = replacement->left;
+
+        swap(this->parent, replacement->parent);
+        swap(this->left, replacement->left);
+        swap(this->right, replacement->right);
+        
+
+        this->parent->replace_child(replacement, this);
+        if (replacement->parent)
+            replacement->parent->replace_child(this, replacement);
+
+        if (replacement->left)
+            replacement->left->parent = replacement;
+        if (this->left)
+            this->left->parent = this;
+        
+        if (replacement->right)
+            replacement->right->parent = replacement;
+        if (this->right)
+            this->right->parent = this;        
+    }
+
+    // replace this node with its subtree
+    if (left) {
+        if (parent)
+            parent->replace_child(this, left);
+        
+        left->parent = parent;
+
+    } else {
+        if (parent)
+            parent->replace_child(this, right);
+        if (right)
+            right->parent = parent;
+    }
+
+    // rebalance the tree
+    for (AVLNode *cur = parent; cur; cur = cur->parent) {
+        cur->update_statistics();
+        cur->balance();
+    }
+}
+
+AVLNode* AVLNode::rotate_right() {
+    assert(left != NULL and left->right != NULL);
+
+    AVLNode *l_node = left, *lr_node = left->right;
+
+    this->parent = l_node;
+    l_node->right = this;
+
+    this->left = lr_node;
+    lr_node->parent = this;
+    
+    this->update_statistics();
+    lr_node->update_statistics();
+
+    return l_node;
+}
+
+AVLNode* AVLNode::rotate_left() {
+    assert(right != NULL and right->left != NULL);
+
+    AVLNode *r_node = right, *rl_node = right->left;
+
+    this->parent = r_node;
+    r_node->left = this;
+
+    this->right = rl_node;
+    rl_node->parent = this;
+    
+    this->update_statistics();
+    rl_node->update_statistics();
+
+    return r_node;
+}
+
+void AVLNode::balance() {
+
+    int hl = left ? left->height : 0;
+    int hr = right ? right->height : 0;
+    // root and parent node of the subtree that is being balanced
+    AVLNode *root, *parent_node = parent;
+
+    assert(abs(hl - hr) <= 2);
+
+    if (hl == hr + 2) {
+        int hll = left->left ? left->left->height : 0;
+        int hlr = left->right ? left->right->height : 0;
+
+        if (hll >= hlr) {
+            root = this->rotate_right();
+        } else {
+            left = left->rotate_left();
+            left->parent = this;
+            root = this->rotate_right();
+        }
+    } else if (hr == hl + 2) {
+        int hrr = right->right ? right->right->height : 0;
+        int hrl = right->left ? right->left->height : 0;
+
+        if (hrr >= hrl) {
+            root = this->rotate_left();
+        } else {
+            right = right->rotate_right();
+            right->parent = this;
+            root = this->rotate_left();
+        }
+    } else {
+        // no rebalancing needed at this level
+        root = this;
+        this->update_statistics();
+    }
+
+    root->parent = parent_node;
+    if (parent_node)
+        parent_node->replace_child(this, root);
+}
+
+void AVLNode::deconstruct_tree(AVLNode *node, vector <AVLNode*> &node_list) {
+
+    if (node == NULL)
+        return;
+    
+    deconstruct_tree(node->left, node_list);
+    
+    if (dynamic_cast<DummyNode*>(node) == NULL)
+        node_list.push_back(node);
+
+    deconstruct_tree(node->right, node_list);
+
+    if (dynamic_cast<DummyNode*>(node) != NULL)
+        delete node;
+}
+
+AVLNode* AVLNode::build_avl(vector<AVLNode*>::iterator begin, vector <AVLNode*>::iterator end) {
+    if (begin == end)
+        return NULL;
+    
+    int n = end - begin;
+    auto mid = begin + (n/2);
+
+    (*mid)->left = build_avl(begin, mid);
+    (*mid)->right = build_avl(mid+1, end);
+    
+    if ((*mid)->left)
+        (*mid)->left->parent = (*mid);
+    if ((*mid)->right)
+        (*mid)->right->parent = (*mid);
+    
+    (*mid)->update_statistics();
+    return (*mid);
+}
+
+// Getters for subclass specific fields
+
+bool EdgeNode::is_on_level() {
+    return on_level;
+}
+
+bool AVLNode::is_on_level() {
+    return false;
+}
+
+int AVLNode::get_num_nontree_edges() {
+    return 0;
+}
+
+int VertexNode::get_num_nontree_edges() {
+    return NTEdges.size();
+}
+
+// Manage data stored in the nodes
+
+void AVLNode::update_statistics() {
+    height = 1;
+    size = dynamic_cast<VertexNode*>(this) ? 0 : 1;
+    on_level_cnt = is_on_level() ? 1 : 0;
+    nontree_cnt = get_num_nontree_edges();
+
+    if (left) {
+        height = max(height, left->height + 1);
+        size += left->size;
+        on_level_cnt += left->on_level_cnt;
+        nontree_cnt += left->nontree_cnt;
+    }
+    if (right) {
+        height = max(height, right->height + 1);
+        size += right->size;
+        on_level_cnt += right->on_level_cnt;
+        nontree_cnt += right->nontree_cnt;
+    }
 }
 
 void AVLNode::update_on_level_cnt(int dx) {
@@ -28,130 +359,10 @@ void AVLNode::update_nontree_cnt(int dx) {
     }
 }
 
-void AVLNode::unlink_children() {
-    if (left) {
-        left->parent = NULL;
-        left = NULL;
-    }
-    if (right) {
-        right->parent = NULL;
-        right = NULL;
-    }
-
-    height = 1;
-    size = 1;
-    recount_nontree_cnt();
-}
-
-pair <AVLNode*, AVLNode*> AVLNode::split() {
-    AVLNode *left_child, *right_child, *left_tree, *right_tree, *prv, *cur;
-
-    left_tree = left;
-    right_tree = right;
-    prv = this;
-    cur = parent;
-
-    unlink_children();
-
-    prv->parent = NULL;
-    left_tree = merge(left_tree, prv);
-
-    while (cur != NULL) {
-        left_child = right_child = NULL;
-
-        if (cur->left == prv) {
-            left_child = cur->left;
-        } else {
-            right_child = cur->right;
-        }
-
-        prv = cur;
-        cur = cur->parent;
-        prv->unlink_children();
-
-        prv->parent = NULL;
-        if (left_child)
-            left_tree = merge(left_child, merge(prv, left_tree));
-        
-        if (right_child)
-            right_tree = merge(right_tree, merge(prv, right_child));
-
-    }
-
-    return {left_tree, right_tree};
-}
-
-void AVLNode::update_statistics() {
-    height = 1;
-    size = 1;
-    on_level_cnt = is_on_level() ? 1 : 0;
-    if (left) {
-        height = max(height, left->height + 1);
-        size += left->size;
-        on_level_cnt += left->on_level_cnt;
-    }
-    if (right) {
-        height = max(height, right->height + 1);
-        size += right->size;
-        on_level_cnt += right->on_level_cnt;
-    }
-
-    recount_nontree_cnt();
-}
-
-AVLNode *AVLNode::merge(AVLNode *left, AVLNode *right) {
-    if (left == NULL) return right;
-    if (right == NULL) return left;
-
-    if (left->height <= right->height) {
-
-        if (right->left) {
-            right->left->parent = NULL;
-            right->left = merge(left, right->left);
-            right->left->parent = right;
-        } else {
-            right->left = left;
-            left->parent = right;
-        }
-
-        right->update_statistics();
-        return right;
-
-    } else {
-
-        if (left->right) {
-            left->right->parent = NULL;
-            left->right = merge(left->right, right);
-            left->right->parent = left;
-        } else {
-            left->right = right;
-            right->parent = left;
-        }
-
-        left->update_statistics();
-        return left;
-    }
-}
-
-void AVLNode::unlink() {
-    AVLNode *left_child, *right_child, *subtree;
-
-    left_child = left;
-    right_child = right;
-    unlink_children();
-
-    subtree = merge(left_child, right_child);
-    if (parent) {
-        if (parent->left == this) {
-            parent->left = subtree;
-        } else {
-            parent->right = subtree;
-        }
-    }
-
-    for (AVLNode *cur = parent; cur; cur = cur->parent) {
-        cur->update_statistics();
-    }
+list<int>::iterator VertexNode::push_nontree_edge(int to) {
+    NTEdges.push_front(to);
+    update_nontree_cnt(1);
+    return NTEdges.begin();
 }
 
 bool AVLNode::pop_nontree_edge(pair <int, int> &edge) {
@@ -162,97 +373,44 @@ bool AVLNode::pop_nontree_edge(pair <int, int> &edge) {
            (right && right->pop_nontree_edge(edge));
 }
 
+bool VertexNode::pop_nontree_edge(pair <int, int> &edge) {
+    if (NTEdges.empty())
+        return AVLNode::pop_nontree_edge(edge);
+
+    edge = {idx, NTEdges.front()};
+    NTEdges.pop_front();
+    update_nontree_cnt(-1);
+    return true;
+}
+
+void VertexNode::erase_nontree_edge(list<int>::iterator it) {
+    NTEdges.erase(it);
+    update_nontree_cnt(-1);
+}
+
 bool AVLNode::promote_tree_edge(pair <int, int> &edge) {
-    if (nontree_cnt == 0)
+    if (on_level_cnt == 0)
         return false;
     
     return (left && left->promote_tree_edge(edge)) ||
            (right && right->promote_tree_edge(edge));
 }
 
-unsigned int AVLNode::get_nontree_cnt() {
-    return nontree_cnt;
-}
-
-AVLNode* AVLNode::rotate_right() {
-    assert(left != NULL and left->left != NULL and left->right != NULL);
-
-    AVLNode *left_child = left;
-
-    this->parent = left_child;
-    left_child->right = this;
-
-    this->left = left_child->right;
-    left_child->right->parent = this;
+bool EdgeNode::promote_tree_edge(pair <int, int> &edge) {
+    if (on_level) {
+        edge = {from, to};
+        on_level = false;
+        update_on_level_cnt(-1);
+        return true;
+    }
     
-    this->update_statistics();
-    left_child->update_statistics();
-
-    return left_child;
+    return AVLNode::promote_tree_edge(edge);
 }
 
-AVLNode* AVLNode::rotate_left() {
-    assert(right != NULL and right->left != NULL and right->right != NULL);
-
-    AVLNode *right_child = right;
-
-    this->parent = right_child;
-    right_child->left = this;
-
-    this->right = right_child->left;
-    right_child->left->parent = this;
-    
-    this->update_statistics();
-    right_child->update_statistics();
-
-    return right_child;
-}
-
-void AVLNode::balance() {
-
-    unsigned int hl = left ? left->height : 0;
-    unsigned int hr = right ? right->height : 0;
-    // root and parent node of the subtree that is being balanced
-    AVLNode *root, *parent_node = parent;
-
-    if (hl == hr + 2) {
-        unsigned int hll = left->left ? left->left->height : 0;
-        unsigned int hlr = left->right ? left->right->height : 0;
-
-        if (hll >= hlr) {
-            root = this->rotate_right();
-        } else {
-            left = left->rotate_left();
-            root = this->rotate_right();
-        }
-    } else if (hr == hl + 2) {
-        unsigned int hrr = right->right ? right->right->height : 0;
-        unsigned int hrl = right->left ? right->left->height : 0;
-
-        if (hrr >= hrl) {
-            root = this->rotate_left();
-        } else {
-            right = right->rotate_right();
-            root = this->rotate_left();
-        }
-    }
-
-    if (parent_node) {
-        if (parent_node->left == this) {
-            parent_node->left = root;
-        } else {
-            parent_node->right = root;
-        }
-    }
-
-    if (height != max(hl, hr) + 1 and parent_node) {
-        parent_node->balance();
-    }
-}
 
 bool AVLNode::correct_tree(AVLNode *correct_parent) {
-    unsigned int correct_height = 1;
-    unsigned int correct_size = 1;
+    int correct_height = 1;
+    unsigned int correct_size = dynamic_cast<VertexNode*>(this) ? 0 : 1;
     unsigned int correct_nontree_cnt = get_num_nontree_edges();
     unsigned int correct_on_level_cnt = is_on_level() ? 1 : 0;
 
@@ -262,7 +420,7 @@ bool AVLNode::correct_tree(AVLNode *correct_parent) {
     }
 
     if (left) {
-        if (left->correct_tree(this))
+        if (!left->correct_tree(this))
             return false;
         
         correct_height = max(correct_height, left->height + 1);
@@ -283,7 +441,7 @@ bool AVLNode::correct_tree(AVLNode *correct_parent) {
     }
     
     if (right) {
-        if (right->correct_tree(this))
+        if (!right->correct_tree(this))
             return false;
         
         correct_height = max(correct_height, right->height + 1);
@@ -306,95 +464,19 @@ bool AVLNode::correct_tree(AVLNode *correct_parent) {
     if (correct_height != height) {
         debug ("height does not match\n");
         return false;
-    }
-    
+    } 
     if (correct_size != size) {
         debug ("size does not match\n");
         return false;
     }
-
     if (correct_nontree_cnt != nontree_cnt) {
         debug ("nontree_cnt does not match\n");
         return false;
     }
-    
     if (correct_on_level_cnt != on_level_cnt) {
         debug ("on_level_cnt does not match\n");
         return false;
     }
     
     return true;
-}
-
-
-list<int>::iterator VertexNode::push_nontree_edge(int to) {
-    NTEdges.push_front(to);
-    update_nontree_cnt(1);
-    return NTEdges.begin();
-}
-
-bool VertexNode::pop_nontree_edge(pair <int, int> &edge) {
-    if (NTEdges.empty())
-        return AVLNode::pop_nontree_edge(edge);
-
-    edge = {idx, NTEdges.front()};
-    NTEdges.pop_front();
-    update_nontree_cnt(-1);
-    return true;
-}
-
-void VertexNode::erase_nontree_edge(list<int>::iterator it) {
-    NTEdges.erase(it);
-    update_nontree_cnt(-1);
-}
-
-void VertexNode::recount_nontree_cnt() {
-    nontree_cnt = NTEdges.size();
-    if (left) nontree_cnt += left->get_nontree_cnt();
-    if (right) nontree_cnt += right->get_nontree_cnt();
-}
-
-int VertexNode::get_num_nontree_edges() {
-    return NTEdges.size();
-}
-
-VertexNode::VertexNode(int i): AVLNode() {
-    idx = i;
-}
-
-bool VertexNode::is_on_level() {
-    return false;
-}
-
-EdgeNode::EdgeNode(int a, int b, bool _on_level): AVLNode() {
-    from = a;
-    to = b;
-    on_level = _on_level;
-    on_level_cnt = on_level ? 1 : 0;
-}
-
-void EdgeNode::recount_nontree_cnt() {
-    nontree_cnt = 0;
-    if (left) nontree_cnt += left->get_nontree_cnt();
-    if (right) nontree_cnt += right->get_nontree_cnt();
-}
-
-bool EdgeNode::promote_tree_edge(pair <int, int> &edge) {
-    if (on_level) {
-        edge = {from, to};
-        on_level = false;
-        update_on_level_cnt(-1);
-        return true;
-    }
-    
-    return AVLNode::promote_tree_edge(edge);
-}
-
-
-int EdgeNode::get_num_nontree_edges() {
-    return 0;
-}
-
-bool EdgeNode::is_on_level() {
-    return on_level;
 }
