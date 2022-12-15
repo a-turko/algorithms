@@ -147,7 +147,7 @@ void DynamicConnectivity::remove(int a, int b) {
 }
 
 bool DynamicConnectivity::correct() {
-    for (int l = 0; l <= L; l++) {
+    for (int l = 0; l <= 0; l++) {
         debug ("----------------(Check level %d)-------------\n", l);
         if (!Forests[l].correct())
             return false;

@@ -26,6 +26,8 @@ ETTForest::~ETTForest() {
     }
 }
 
+#define show_tree(x) {debug ("Show a tree\n");if (x) x->print_tree(); else debug("(empty)\n");}
+
 void ETTForest::insert_tree_edge(int a, int b, bool on_level) {
     EdgeNode *ab_edge = new EdgeNode(a,b, on_level);
     EdgeNode *ba_edge = new EdgeNode(b,a, on_level);
@@ -35,6 +37,13 @@ void ETTForest::insert_tree_edge(int a, int b, bool on_level) {
 
     auto [left_a, right_a] = Vertices[a].split();
     auto [left_b, right_b] = Vertices[b].split();
+
+    debug ("Insert tree edge (%d %d)\n", a, b);
+   /*show_tree(left_a);
+   show_tree(right_a);
+   show_tree(left_b);
+   show_tree(right_b);*/
+    
 
     //TODO: describe the order of the euler tour
     AVLNode::merge(AVLNode::merge(left_a, ab_edge, right_b),
@@ -114,13 +123,25 @@ int ETTForest::size(int a) {
 
 // TODO: process any root only once
 bool ETTForest::correct() {
+    debug ("%d vertices\n", (int)Vertices.size());
+    set<AVLNode *> processed;
     for (VertexNode &node: Vertices) {
-        AVLNode *root = node.root();
+
         debug ("Test vertex %d:\n", node.idx);
+        //node.print_node();
+
+        AVLNode *root = node.root();
+
+        if (processed.count(root) > 0)
+            continue;
+        processed.insert(root);
+        
 
         root->print_tree();
+        debug ("Printed\n");
         if (!root->correct_tree(nullptr))
             return false;
+        debug ("Correct tree done\n");
     }
     return true;
 }

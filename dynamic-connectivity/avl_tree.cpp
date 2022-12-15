@@ -38,13 +38,18 @@ void AVLNode::unlink_children() {
 }
 
 AVLNode *AVLNode::root() {
+    int cnt = 5;
     AVLNode *cur = this;
-    while (cur->parent != NULL) {
+    while (cur->parent != NULL and cnt--) {
+        debug ("0x%llx\n", (long long)cur);
+        cur->print_node();
         cur = cur->parent;
     }
+    assert(cnt > 0); //TODO: remove
     return cur;
 }
 
+//TODO: debug -- this isnot working
 pair <AVLNode*, AVLNode*> AVLNode::split() {
     AVLNode *left_child, *right_child, *left_tree, *right_tree, *prv, *cur;
 
@@ -56,12 +61,12 @@ pair <AVLNode*, AVLNode*> AVLNode::split() {
     prv->unlink_children();
     prv->parent = NULL;
 
-    left_tree = merge(left_tree, prv, NULL);
+    left_tree = merge(left_tree, NULL, prv);
 
     while (cur != NULL) {
         left_child = right_child = NULL;
 
-        if (cur->left == prv) {
+        if (cur->right == prv) {
             left_child = cur->left;
         } else {
             right_child = cur->right;
@@ -200,7 +205,7 @@ void AVLNode::erase() {
 }
 
 AVLNode* AVLNode::rotate_right() {
-    assert(left != NULL and left->right != NULL);
+    assert(left != NULL);
 
     AVLNode *l_node = left, *lr_node = left->right;
 
@@ -208,7 +213,8 @@ AVLNode* AVLNode::rotate_right() {
     l_node->right = this;
 
     this->left = lr_node;
-    lr_node->parent = this;
+    if (lr_node)
+        lr_node->parent = this;
     
     this->update_statistics();
     l_node->update_statistics();
@@ -217,7 +223,7 @@ AVLNode* AVLNode::rotate_right() {
 }
 
 AVLNode* AVLNode::rotate_left() {
-    assert(right != NULL and right->left != NULL);
+    assert(right != NULL);
 
     AVLNode *r_node = right, *rl_node = right->left;
 
@@ -225,7 +231,8 @@ AVLNode* AVLNode::rotate_left() {
     r_node->left = this;
 
     this->right = rl_node;
-    rl_node->parent = this;
+    if (rl_node)
+        rl_node->parent = this;
     
     this->update_statistics();
     r_node->update_statistics();
@@ -400,6 +407,7 @@ bool AVLNode::correct_tree(AVLNode *correct_parent) {
     unsigned int correct_nontree_cnt = get_num_nontree_edges();
     unsigned int correct_on_level_cnt = is_on_level() ? 1 : 0;
 
+    debug ("correct tree from 0x%llx\n", (long long)this);
     if (parent != correct_parent) {
         debug ("parent does not match\n");
         return false;
