@@ -38,14 +38,12 @@ void AVLNode::unlink_children() {
 }
 
 AVLNode *AVLNode::root() {
-    int cnt = 5;
     AVLNode *cur = this;
-    while (cur->parent != NULL and cnt--) {
+    while (cur->parent != NULL) {
         debug ("0x%llx\n", (long long)cur);
         cur->print_node();
         cur = cur->parent;
     }
-    assert(cnt > 0); //TODO: remove
     return cur;
 }
 
@@ -96,6 +94,8 @@ void AVLNode::replace_child(AVLNode *old_child, AVLNode *new_child) {
         right = new_child;
 
     } else {
+        int tab[5];
+        tab[6]++;
         assert(0);
     }
 }
@@ -172,49 +172,22 @@ AVLNode *AVLNode::merge(AVLNode *left, AVLNode *middle, AVLNode *right) {
 
 void AVLNode::erase() {
 
-    // make sure that this node has at most one child
-    if (right) {
-        AVLNode *replacement = right;
-        while (replacement->left)
-            replacement = replacement->left;
-
-        swap(this->parent, replacement->parent);
-        swap(this->left, replacement->left);
-        swap(this->right, replacement->right);
-        
-
-        this->parent->replace_child(replacement, this);
-        if (replacement->parent)
-            replacement->parent->replace_child(this, replacement);
-
-        if (replacement->left)
-            replacement->left->parent = replacement;
-        if (this->left)
-            this->left->parent = this;
-        
-        if (replacement->right)
-            replacement->right->parent = replacement;
-        if (this->right)
-            this->right->parent = this;        
-    }
-
     // replace this node with its subtree
-    if (left) {
-        if (parent)
-            parent->replace_child(this, left);
-        
-        left->parent = parent;
 
-    } else {
-        if (parent)
-            parent->replace_child(this, right);
-        if (right)
-            right->parent = parent;
+    if (left)
+        left->parent = NULL;
+    if (right)
+        right->parent = NULL;
+
+    AVLNode *subtree = merge(left, NULL, right);
+    if (parent) {
+        parent->replace_child(this, subtree);
+        if (subtree)
+            subtree->parent = parent;
     }
 
     // rebalance the tree
     for (AVLNode *cur = parent; cur; cur = cur->parent) {
-        cur->update_statistics();
         cur->balance();
     }
 }
