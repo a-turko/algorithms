@@ -2,6 +2,8 @@
 #include <set>
 #include "et_trees.hpp"
 
+#define show_tree(x) {debug ("%s: %p\n", #x, (void *)x);if (x) x->print_tree(); else debug("(empty)\n");}
+
 static int64_t edge_id(int a, int b) {
     return (int64_t(a) << 32) | b;
 }
@@ -38,11 +40,11 @@ void ETTForest::insert_tree_edge(int a, int b, bool on_level) {
     auto [left_a, right_a] = Vertices[a].split();
     auto [left_b, right_b] = Vertices[b].split();
 
-    /*debug ("Insert tree edge (%d %d)\n", a, b);
+    debug ("Insert tree edge (%d %d)\n", a, b);
     show_tree(left_a);
     show_tree(right_a);
     show_tree(left_b);
-    show_tree(right_b);*/
+    show_tree(right_b);
     
 
     //TODO: describe the order of the euler tour
@@ -55,22 +57,37 @@ void ETTForest::insert_tree_edge(int a, int b, bool on_level) {
 void ETTForest::remove_tree_edge(int a, int b) {
     debug ("Remove tree edge (%d %d)\n", a, b);
 
+    AVLNode *outer, *inner;
     EdgeNode *ab_edge = TEdgeHooks[edge_id(a,b)];
     EdgeNode *ba_edge = TEdgeHooks[edge_id(b,a)];
     TEdgeHooks.erase(edge_id(a,b));
     TEdgeHooks.erase(edge_id(b,a));
 
+    debug ("Initially:\n");
+    show_tree(ab_edge->root());
+
     auto [l, r] = ab_edge->split();
+
+    show_tree(l);
+    show_tree(r);
+
     if (l == ba_edge->root()) {
         auto [ll, lr] = ba_edge->split();
-        AVLNode::merge(ll, NULL, r);
+
+        outer = AVLNode::merge(ll, NULL, r);
+        inner = lr;
 
     } else {
         assert(r == ba_edge->root());
 
         auto [rl, rr] = ba_edge->split();
-        AVLNode::merge(l, NULL, rr);
+        outer = AVLNode::merge(l, NULL, rr);
+        inner = rl;
     }
+
+    debug ("After split:\n");
+    show_tree(outer);
+    show_tree(inner);
 
     ab_edge->erase();
     ba_edge->erase();
@@ -141,8 +158,8 @@ bool ETTForest::correct() {
         }
         processed.insert(root);
         
-        debug ("Root: %p\n", (void*)root);
-        //root->print_tree();
+        debug ("\nRoot: %p\n", (void*)root);
+        root->print_tree();
         if (!root->correct_tree(nullptr)) {
             return false;
         }

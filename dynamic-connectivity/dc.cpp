@@ -81,8 +81,11 @@ bool DynamicConnectivity::find_replacement(int a, int b, int level, pair <int, i
     // Promote tree edges from A to the next level:
     auto promoted = Forests[level].promote_tree_edges(a);
     for (auto e: promoted) {
-        EdgeLevels[ordered_pair(e.first, e.second)] = level+1;
-        Forests[level+1].insert_tree_edge(e.first, e.second, true);
+        if (EdgeLevels[ordered_pair(e.first, e.second)] == level) {
+            
+            EdgeLevels[ordered_pair(e.first, e.second)] = level+1;
+            Forests[level+1].insert_tree_edge(e.first, e.second, true);
+        }
     }
 
     // Browse through all nontree edges with one endpoint in A:
@@ -149,8 +152,10 @@ void DynamicConnectivity::remove(int a, int b) {
 bool DynamicConnectivity::correct() {
     for (int l = 0; l <= L; l++) {
         debug ("----------------(Check level %d)-------------\n", l);
-        if (!Forests[l].correct())
+        if (!Forests[l].correct()) {
+            debug ("Error in forest %d\n", l);
             return false;
+        }
     }
     return true;
 }

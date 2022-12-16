@@ -152,8 +152,12 @@ int main()
     assert(check_correctness(3, {{'I', {0, 1}}, {'I', {1, 2}}, {'Q', {0, 2}}}));
     assert(verify_execution(3, {{'I', {0, 1}}, {'I', {1, 2}}, {'Q', {0, 2}}}));
 
-    for (int i = 0; i < 10; i++) {
-        assert(verify_execution(500, gen_test(500, 10000, i)));
+    for (int i = 0; i < 1000; i++) {
+        printf ("Test %d\n", i);
+        if (!verify_execution(500, gen_test(500, 10000, i))) {
+            debug ("Failed on test %d");
+            return 0;
+        }
         assert(check_correctness(500, gen_test(500, 10000, i)));
     }
 

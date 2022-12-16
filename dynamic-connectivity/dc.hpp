@@ -1,3 +1,6 @@
+#ifndef DC_HPP
+#define DC_HPP
+
 #include <vector>
 #include <map>
 #include "et_trees.hpp"
@@ -31,3 +34,5 @@ class DynamicConnectivity {
     map<pair<int, int>, int> EdgeCnt;
     int L;
 };
+
+#endif

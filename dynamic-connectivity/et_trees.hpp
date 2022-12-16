@@ -1,3 +1,6 @@
+#ifndef ET_TREES_HPP
+#define ET_TREES_HPP
+
 #include <unordered_map>
 #include <vector>
 #include <cstdint>
@@ -26,6 +29,6 @@ class ETTForest {
     unordered_map <int64_t, list<int>::iterator> NTEdgeHooks;
     vector <VertexNode> Vertices;
     int dummy_node_credits, logn, n;
-
-    void rebuild_trees();
 };
+
+#endif

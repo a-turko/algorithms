@@ -4,10 +4,10 @@ SANITIZE= -fsanitize=address -fsanitize=undefined -static-libasan
 OPTIMIZE= -O3
 
 objects=et_trees.o et_trees.san.o avl_tree.san.o avl_tree.o dc.o dc.san.o test.o test.san.o
-executables=test
+executables=test-opt test-san
 submissions=cf_a_standalone.cpp
 
-default: test
+default: all
 
 all: $(executables)
 
@@ -23,11 +23,14 @@ test.o: test.cpp
 test.san.o: test.cpp
 	$(CXX) -c $(CXXFLAGS) $(SANITIZE) $< -o $@
 
-test: test.san.o dc.san.o et_trees.san.o avl_tree.san.o
+test-san: test.san.o dc.san.o et_trees.san.o avl_tree.san.o
 	$(CXX) $(CXXFLAGS) $(SANITIZE) $^ -o $@
 
+test-opt: test.o dc.o et_trees.o avl_tree.o
+	$(CXX) $(CXXFLAGS) $(OPTIMIZE) $^ -o $@
+
 cf_a: cf_a.cpp
-	$(CXX) $(CXXFLAGS) -E $< -o cf_a_standalone.cpp
+	python3 paste_includes.py cf_a.cpp > cf_a_standalone.cpp
 	$(CXX) $(CXXFLAGS) $(SANITIZE) cf_a_standalone.cpp -o cf_a
 clean:
 	rm -f $(objects) $(executables) $(submissions)

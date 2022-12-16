@@ -2,7 +2,7 @@
 #include <cstdlib>
 #include "avl_tree.hpp"
 
-#define show_tree(x) {} //{debug ("%s: %p\n", #x, (void *)x);if (x) x->print_tree(); else debug("(empty)\n");}
+#define show_tree(x) {debug ("%s: %p\n", #x, (void *)x);if (x) x->print_tree(); else debug("(empty)\n");}
 #define segfault {int __cnt[4]; __cnt[4] = 0;}
 
 AVLNode::AVLNode() {
@@ -201,8 +201,9 @@ void AVLNode::erase() {
     }
 
     // rebalance the tree
-    for (AVLNode *cur = parent; cur; cur = cur->parent) {
-        cur->balance();
+    AVLNode *cur = parent;
+    while (cur) {
+        cur = cur->balance()->parent;
     }
 
     parent = left = right = NULL;
@@ -428,6 +429,11 @@ bool AVLNode::correct_tree(AVLNode *correct_parent) {
     if (parent != correct_parent) {
         debug ("parent does not match: 0x%llx vs 0x%llx\n", (long long)parent, (long long)correct_parent);
         //segfault;
+        return false;
+    }
+
+    if (left && left == right) {
+        debug ("left and right children are the same!\n");
         return false;
     }
 

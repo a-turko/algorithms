@@ -36,6 +36,7 @@ class AVLNode {
     }
 
     void print_tree(int indent = 0) {
+        return;
         if (left) left->print_tree(indent+1);
         print_node(indent);
         if (right) right->print_tree(indent+1);
