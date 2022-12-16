@@ -2,8 +2,7 @@
 #include <cstdlib>
 #include "avl_tree.hpp"
 
-#define show_tree(x) {debug ("%s: %p\n", #x, (void *)x);if (x) x->print_tree(); else debug("(empty)\n");}
-#define segfault {int __cnt[4]; __cnt[4] = 0;}
+#define debug(...) {fprintf(stderr, __VA_ARGS__); fflush(stderr);}
 
 AVLNode::AVLNode() {
     left = right = parent = NULL;
@@ -48,10 +47,8 @@ AVLNode *AVLNode::root() {
     return cur;
 }
 
-//TODO: debug -- this is not working
 pair <AVLNode*, AVLNode*> AVLNode::split() {
     AVLNode *left_child, *right_child, *left_tree, *right_tree, *prv, *cur, *nxt;
-
     left_tree = left;
     right_tree = right;
     nxt = parent;
@@ -59,7 +56,6 @@ pair <AVLNode*, AVLNode*> AVLNode::split() {
 
     cur->unlink_children();
     cur->parent = NULL;
-
     left_tree = merge(left_tree, NULL, cur);
 
     while (nxt != NULL) {
@@ -74,6 +70,7 @@ pair <AVLNode*, AVLNode*> AVLNode::split() {
             left_child = cur->left;
             if (left_child)
                 left_child->parent = NULL;
+
         } else {
             right_child = cur->right;
             if (right_child)
@@ -92,13 +89,11 @@ pair <AVLNode*, AVLNode*> AVLNode::split() {
         }
     }
 
-    if ((left and left_tree->parent) or (right and right_tree->parent)) {
-        segfault;
-    }
     return {left_tree, right_tree};
 }
 
 void AVLNode::replace_child(AVLNode *old_child, AVLNode *new_child) {
+
     if (left == old_child) {
         left = new_child;
 
@@ -106,24 +101,11 @@ void AVLNode::replace_child(AVLNode *old_child, AVLNode *new_child) {
         right = new_child;
 
     } else {
-        // TODO: clean up
-        int tab[5];
-        tab[6]++;
         assert(0);
     }
 }
 
 AVLNode *AVLNode::merge(AVLNode *left, AVLNode *middle, AVLNode *right) {
-
-    /*
-        debug ("\nmerge(0x%llx, 0x%llx, 0x%llx)\n", (long long)left, (long long)middle, (long long)right);
-        show_tree(left);
-        debug("------\n");
-        show_tree(middle);
-        debug("-----\n");
-        show_tree(right);
-        debug("\n");
-    */
 
     if (left == NULL) {
         if (middle == NULL) {
@@ -141,7 +123,6 @@ AVLNode *AVLNode::merge(AVLNode *left, AVLNode *middle, AVLNode *right) {
     }
 
     if (middle and abs(left->height - right->height) <= 1) {
-        //debug ("Merge using middle (middle)\n");
 
         middle->left = left;
         middle->right = right;
@@ -151,43 +132,32 @@ AVLNode *AVLNode::merge(AVLNode *left, AVLNode *middle, AVLNode *right) {
         middle->update_statistics();
         return middle;
     }
-    
 
     if (left->height <= right->height) {
-        //debug ("Classical merge (left->height <= right->height)\n");
+
         if (right->left)
             right->left->parent = NULL;
         
         right->left = merge(left, middle, right->left);
         right->left->parent = right;
-        //debug ("\nback to merge(0x%llx, 0x%llx, 0x%llx)\n", (long long)left, (long long)middle, (long long)right);
-
-        right->update_statistics();
-        
-        auto ret = right->balance();
-        //show_tree(ret);
-        return ret;
+        right->update_statistics();       
+        return right->balance();
 
     } else { // left->height > right->height
-        // debug ("Classical merge (left->height > right->height)\n");
+
         if (left->right)
             left->right->parent = NULL;
         
         left->right = merge(left->right, middle, right);
         left->right->parent = left;
-        //debug ("\nback to merge(0x%llx, 0x%llx, 0x%llx)\n", (long long)left, (long long)middle, (long long)right);
-
         left->update_statistics();
-        auto ret = left->balance();
-        //show_tree(ret);
-        return ret;
+        return left->balance();
     }
 }
-//TODO: rename to unlink
-void AVLNode::erase() {
+
+void AVLNode::unlink() {
 
     // replace this node with its subtree
-
     if (left)
         left->parent = NULL;
     if (right)
@@ -211,7 +181,6 @@ void AVLNode::erase() {
 
 AVLNode* AVLNode::rotate_right() {
     assert(left != NULL);
-
     AVLNode *l_node = left, *lr_node = left->right;
 
     this->parent = l_node;
@@ -224,13 +193,11 @@ AVLNode* AVLNode::rotate_right() {
     
     this->update_statistics();
     l_node->update_statistics();
-
     return l_node;
 }
 
 AVLNode* AVLNode::rotate_left() {
     assert(right != NULL);
-
     AVLNode *r_node = right, *rl_node = right->left;
 
     this->parent = r_node;
@@ -243,7 +210,6 @@ AVLNode* AVLNode::rotate_left() {
     
     this->update_statistics();
     r_node->update_statistics();
-
     return r_node;
 }
 
@@ -251,13 +217,8 @@ AVLNode* AVLNode::balance() {
 
     int hl = left ? left->height : 0;
     int hr = right ? right->height : 0;
-    // root and parent node of the subtree that is being balanced
     AVLNode *root, *parent_node = parent;
 
-    if (abs(hl - hr) > 3) {
-        debug ("\nThis tree is problematic:\n");
-        print_tree();
-    }
     assert(abs(hl - hr) <= 3);
 
     if (hl > hr + 1) {
@@ -421,14 +382,12 @@ bool VertexNode::promote_tree_edge(pair <int, int> &edge) {
 
 bool AVLNode::correct_tree(AVLNode *correct_parent) {
     int correct_height = 1;
-    unsigned int correct_size = dynamic_cast<VertexNode*>(this) ? 1 : 0;
-    unsigned int correct_nontree_cnt = get_num_nontree_edges();
-    unsigned int correct_on_level_cnt = is_on_level() ? 1 : 0;
+    int correct_size = dynamic_cast<VertexNode*>(this) ? 1 : 0;
+    int correct_nontree_cnt = get_num_nontree_edges();
+    int correct_on_level_cnt = is_on_level() ? 1 : 0;
 
-    debug ("correct tree from 0x%llx\n", (long long)this);
     if (parent != correct_parent) {
         debug ("parent does not match: 0x%llx vs 0x%llx\n", (long long)parent, (long long)correct_parent);
-        //segfault;
         return false;
     }
 

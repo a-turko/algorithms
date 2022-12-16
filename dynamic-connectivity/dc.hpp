@@ -14,16 +14,20 @@ class DynamicConnectivity {
 
     // Inserts an undirected (a,b) edge to the graph
     // (parallel edges are supported)
+    // Complexity: O(log n) and O(log^2 n) in amortization costs
     void insert(int a, int b);
 
     // Removes an undirected (a,b) edge from the graph
     // If there are multiple such edges, removes only one
+    // Complexity: in total amortized by O(log^2 n) per each edge added
     void remove(int a, int b);
 
     // Checks whether vertices a and b are connected in the current graph
+    // Complexity: O(log n)
     bool connected(int a, int b);
 
     // Checks if the invariants of the unterlying data structures hold
+    // Complexity: O(n log n)
     bool correct();
 
     private:

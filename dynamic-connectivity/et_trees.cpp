@@ -2,8 +2,6 @@
 #include <set>
 #include "et_trees.hpp"
 
-#define show_tree(x) {debug ("%s: %p\n", #x, (void *)x);if (x) x->print_tree(); else debug("(empty)\n");}
-
 static int64_t edge_id(int a, int b) {
     return (int64_t(a) << 32) | b;
 }
@@ -28,8 +26,6 @@ ETTForest::~ETTForest() {
     }
 }
 
-#define show_tree(x) {debug ("\n");if (x) x->print_tree(); else debug("(empty)\n");}
-
 void ETTForest::insert_tree_edge(int a, int b, bool on_level) {
     EdgeNode *ab_edge = new EdgeNode(a,b, on_level);
     EdgeNode *ba_edge = new EdgeNode(b,a, on_level);
@@ -38,16 +34,8 @@ void ETTForest::insert_tree_edge(int a, int b, bool on_level) {
     TEdgeHooks[edge_id(b,a)] = ba_edge;
 
     auto [left_a, right_a] = Vertices[a].split();
-    auto [left_b, right_b] = Vertices[b].split();
+    auto [left_b, right_b] = Vertices[b].split();    
 
-    debug ("Insert tree edge (%d %d)\n", a, b);
-    show_tree(left_a);
-    show_tree(right_a);
-    show_tree(left_b);
-    show_tree(right_b);
-    
-
-    //TODO: describe the order of the euler tour
     AVLNode::merge(AVLNode::merge(left_a, ab_edge, right_b),
                    NULL, 
                    AVLNode::merge(left_b, ba_edge, right_a));
@@ -55,42 +43,25 @@ void ETTForest::insert_tree_edge(int a, int b, bool on_level) {
 }
 
 void ETTForest::remove_tree_edge(int a, int b) {
-    debug ("Remove tree edge (%d %d)\n", a, b);
-
-    AVLNode *outer, *inner;
     EdgeNode *ab_edge = TEdgeHooks[edge_id(a,b)];
     EdgeNode *ba_edge = TEdgeHooks[edge_id(b,a)];
     TEdgeHooks.erase(edge_id(a,b));
     TEdgeHooks.erase(edge_id(b,a));
 
-    debug ("Initially:\n");
-    show_tree(ab_edge->root());
-
     auto [l, r] = ab_edge->split();
-
-    show_tree(l);
-    show_tree(r);
-
     if (l == ba_edge->root()) {
         auto [ll, lr] = ba_edge->split();
-
-        outer = AVLNode::merge(ll, NULL, r);
-        inner = lr;
+        AVLNode::merge(ll, NULL, r);
 
     } else {
         assert(r == ba_edge->root());
 
         auto [rl, rr] = ba_edge->split();
-        outer = AVLNode::merge(l, NULL, rr);
-        inner = rl;
+        AVLNode::merge(l, NULL, rr);
     }
 
-    debug ("After split:\n");
-    show_tree(outer);
-    show_tree(inner);
-
-    ab_edge->erase();
-    ba_edge->erase();
+    ab_edge->unlink();
+    ba_edge->unlink();
     delete ab_edge;
     delete ba_edge;
 }
@@ -142,24 +113,16 @@ int ETTForest::size(int a) {
     return Vertices[a].root()->size;
 }
 
-// TODO: process any root only once
 bool ETTForest::correct() {
-    debug ("%d vertices\n", (int)Vertices.size());
     set<AVLNode *> processed;
     for (VertexNode &node: Vertices) {
-
-        debug ("Test vertex %d: \n", node.idx);
-
         AVLNode *root = node.root();
 
-        if (processed.count(root) > 0) {
-            debug ("Already processed\n");
+        if (processed.count(root) > 0)
             continue;
-        }
+
         processed.insert(root);
         
-        debug ("\nRoot: %p\n", (void*)root);
-        root->print_tree();
         if (!root->correct_tree(nullptr)) {
             return false;
         }
