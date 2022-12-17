@@ -5,7 +5,7 @@ OPTIMIZE= -O3
 
 objects=et_trees.o et_trees.san.o avl_tree.san.o avl_tree.o dc.o dc.san.o test.o test.san.o
 executables=test-opt test-san cf_a cf_e
-submissions=cf_a_standalone.cpp cf_b_standalone.cpp
+submissions=cf_a_standalone.cpp cf_e_standalone.cpp
 
 default: all
 
