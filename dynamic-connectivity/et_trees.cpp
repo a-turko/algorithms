@@ -28,7 +28,7 @@ ETTForest::~ETTForest() {
 
 void ETTForest::insert_tree_edge(int a, int b, bool on_level) {
     EdgeNode *ab_edge = new EdgeNode(a,b, on_level);
-    EdgeNode *ba_edge = new EdgeNode(b,a, on_level);
+    EdgeNode *ba_edge = new EdgeNode(b,a, false);
 
     TEdgeHooks[edge_id(a,b)] = ab_edge;
     TEdgeHooks[edge_id(b,a)] = ba_edge;
@@ -74,8 +74,9 @@ void ETTForest::insert_nontree_edge(int a, int b) {
 vector <pair <int, int> > ETTForest::promote_tree_edges(int a) {
     vector <pair <int, int> > edges;
     pair <int, int> edge;
+    AVLNode *root = Vertices[a].root();
 
-    while (Vertices[a].promote_tree_edge(edge)) {
+    while (root->promote_tree_edge(edge)) {
         edges.push_back(edge);
     }
     return edges;

@@ -3,6 +3,9 @@
 
 #include <vector>
 #include <map>
+
+#define debug(...) {} //fprintf(stderr, __VA_ARGS__), fflush(stderr);
+
 #include "et_trees.hpp"
 using namespace std;
 
@@ -29,6 +32,14 @@ class DynamicConnectivity {
     // Checks if the invariants of the unterlying data structures hold
     // Complexity: O(n log n)
     bool correct();
+
+    // With debug defined, prints the whole datastructure to stderr
+    void print() {
+        for (int i = 0; i <= L; i++) {
+            debug ("--------------Level %d--------------------\n", i);
+            Forests[i].print();
+        }
+    }
 
     private:
     void insert_edge(int a, int b, int level);

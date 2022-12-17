@@ -24,6 +24,19 @@ class ETTForest {
     int size(int a);
     bool correct();
 
+    void print() {
+        debug ("Print the forest:\n");
+        set <AVLNode*> processed;
+        for (auto &v: Vertices) {
+            auto root = v.root();
+            if (processed.find(root) == processed.end()) {
+                processed.insert(root);
+                root->print_tree();
+                debug("\n");
+            }
+        }
+    }
+
     private:
     unordered_map <int64_t, EdgeNode*> TEdgeHooks;
     unordered_map <int64_t, list<int>::iterator> NTEdgeHooks;

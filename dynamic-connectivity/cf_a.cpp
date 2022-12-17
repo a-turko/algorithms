@@ -6,9 +6,12 @@
 #include "et_trees.cpp"
 
 /**
- * Solution to the "Connect and Disconnect" problem from codeforces
+ * A solution to the "Connect and Disconnect" problem from codeforces
  * (https://codeforces.com/gym/100551/problem/A) to validate the
  * correctness and performance of the DynamicConnectivity class.
+ * This solution gets a Memory Limit Exceeded verdict (the model
+ * solution uses less because in the problem queries can be
+ * processed offline)
 */
 
 int main()

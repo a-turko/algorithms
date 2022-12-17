@@ -13,7 +13,7 @@ DynamicConnectivity::DynamicConnectivity(int n) {
 }
 
 /**
- * Inserts a (possible duplicate) edge to the graph.
+ * Inserts a (possibly duplicate) edge to the graph.
  * 
  * Complexity: O(log n)
  * 
@@ -81,11 +81,8 @@ bool DynamicConnectivity::find_replacement(int a, int b, int level, pair <int, i
     // Promote tree edges from A to the next level:
     auto promoted = Forests[level].promote_tree_edges(a);
     for (auto e: promoted) {
-        if (EdgeLevels[ordered_pair(e.first, e.second)] == level) {
-
-            EdgeLevels[ordered_pair(e.first, e.second)] = level+1;
-            Forests[level+1].insert_tree_edge(e.first, e.second, true);
-        }
+        EdgeLevels[ordered_pair(e.first, e.second)] = level+1;
+        Forests[level+1].insert_tree_edge(e.first, e.second, true);
     }
 
     // Browse through all nontree edges with one endpoint in A:
@@ -134,9 +131,10 @@ void DynamicConnectivity::remove(int a, int b) {
         return;
 
     } else {
-
-        for (int l = 0; l <= level; l++)
+        
+        for (int l = 0; l <= level; l++) {
             Forests[l].remove_tree_edge(a,b);
+        }
     }
 
     // Look for a replacement of the removed edge:

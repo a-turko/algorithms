@@ -2,8 +2,6 @@
 #include <cstdlib>
 #include "avl_tree.hpp"
 
-#define debug(...) {fprintf(stderr, __VA_ARGS__); fflush(stderr);}
-
 AVLNode::AVLNode() {
     left = right = parent = NULL;
     height = 1;

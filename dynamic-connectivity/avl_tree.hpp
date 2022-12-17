@@ -8,6 +8,8 @@
 #include <cassert>
 using namespace std;
 
+#define debug(...) {} //fprintf(stderr, __VA_ARGS__)
+
 class AVLNode {
     public:
     // number of vertex nodes in the subtree
@@ -23,6 +25,24 @@ class AVLNode {
     virtual bool promote_tree_edge(pair <int, int> &edge);
     bool correct_tree(AVLNode *correct_parent);
     void unlink();
+
+    void print_tree(int indent = 0) {
+        
+        if (left)
+            left->print_tree(indent + 3);
+        print_node(indent);
+        if (right)
+            right->print_tree(indent + 3);
+    }
+
+    virtual void print_node(int indent = 0) {
+        char spaces[20] = "                   ";
+        spaces[min(19, indent)] = 0;
+        debug("%s0x%llx: left = 0x%llx, right = 0x%llx, parent = 0x%llx,\n \
+                %sheight = %d, nontree_cnt = %d, on_level_cnt = %d, size = %d\n",
+                spaces, (long long) this, (long long) left, (long long) right,
+                (long long) parent, spaces, height, nontree_cnt, on_level_cnt, size);
+    }
 
     private:
     AVLNode *balance();
@@ -52,6 +72,13 @@ class EdgeNode : public AVLNode {
     bool promote_tree_edge(pair <int, int> &edge);
     bool pop_nontree_edge(pair <int, int> &edge);
 
+    void print_node(int indent = 0) {
+        char spaces[20] = "                   ";
+        spaces[min(19, indent)] = 0;
+        debug ("%sEdgeNode: (%d %d)\n", spaces, from, to);
+        AVLNode::print_node(indent);
+    }
+    
     private:
         int get_num_nontree_edges();
         bool is_on_level();
@@ -67,6 +94,16 @@ class VertexNode: public AVLNode {
     list<int>::iterator push_nontree_edge(int to);
     void erase_nontree_edge(list<int>::iterator it);
     bool promote_tree_edge(pair <int, int> &edge);
+
+    void print_node(int indent = 0) {
+        char spaces[20] = "                   ";
+        spaces[min(19, indent)] = 0;
+        debug ("%sVertexNode: %d: ", spaces, idx);
+        for (int x: NTEdges) debug(" %d", x);
+        debug("\n");
+        AVLNode::print_node(indent);
+    }
+
 
     private:
     list<int> NTEdges;
