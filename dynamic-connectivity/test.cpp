@@ -54,27 +54,55 @@ vector <pair <char, pair <int, int> > > gen_test(int n, int q, int seed) {
     srand(seed);
     vector <pair <char, pair <int, int> > > test;
     map <pair <int, int>, int> Edges;
+    set <pair <int, pair <int, int> > > edge_set;
+    map <pair <int, int>, int> rank_map;
+    
+    int cnt = 0;
+    int logn = 1;
+    while ((1<<logn) < n) logn++;
 
     for (int i = 0; i < q; i++) {
         int a = rand() % n;
         int b = rand() % n;
         if (a == b)
             continue;
+        if (a > b)
+            swap(a,b);
         
         char t = rand() % 3;
+
         if (t == 0) {
-            t = 'I';
-            Edges[{a,b}]++;
-        }
-        if (t == 1) {
-            t = 'R';
+            
+            // make sure there are not too many edges
+            if (Edges[{a,b}] == 0 and cnt > n) {
+                auto e = *edge_set.begin();
+                a = e.second.first;
+                b = e.second.second;
+            }
+
             if (Edges[{a,b}] > 0) {
-                Edges[{a,b}]--;
+                
+                if (--Edges[{a,b}] == 0) {
+                    edge_set.erase({rank_map[{a,b}], {a,b}});
+                    rank_map.erase({a,b});
+                }
+                cnt--;
+                t = 'R';
             } else {
-                Edges[{a,b}]++;
-                t = 'I';
+                t = 2;
             }
         }
+
+        if (t == 1) {
+            t = 'I';
+            if (Edges[{a,b}]++ == 0) {
+                int rank = rand();
+                edge_set.insert({rank, {a,b}});
+                rank_map[{a,b}] = rank;
+            }
+            cnt++;
+        }
+
         if (t == 2) {
             t = 'Q';
         }
@@ -88,6 +116,7 @@ bool check_correctness(int n, vector <pair <char, pair <int, int> > > test) {
     NaiveConnectivity NC(n);
     DynamicConnectivity DC(n);
     int idx = 0;
+
     for (auto p: test) {
         idx++;
         if (p.first == 'I') {
@@ -115,6 +144,7 @@ bool check_correctness(int n, vector <pair <char, pair <int, int> > > test) {
             }
         }
     }
+
     return true;
 }
 
@@ -122,7 +152,6 @@ bool verify_execution(int n, vector <pair <char, pair <int, int> > > test) {
     DynamicConnectivity DC(n);
     int idx = 0;
 
-    debug("\nCheck the empty graph:\n");
     if (!DC.correct())
         return false;
 
@@ -152,16 +181,17 @@ int main()
     assert(check_correctness(3, {{'I', {0, 1}}, {'I', {1, 2}}, {'Q', {0, 2}}}));
     assert(verify_execution(3, {{'I', {0, 1}}, {'I', {1, 2}}, {'Q', {0, 2}}}));
 
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 100; i++) {
         printf ("Test %d\n", i);
         if (!verify_execution(500, gen_test(500, 10000, i))) {
             debug ("Failed on test %d");
             return 0;
         }
+
         assert(check_correctness(500, gen_test(500, 10000, i)));
     }
 
-    assert(check_correctness(100, gen_test(100, 1000, 0)));
-    assert(check_correctness(100, gen_test(100, 1000, 3)));
-    assert(check_correctness(100, gen_test(100, 1000, 5)));
+    assert(check_correctness(100, gen_test(100, 1000, -1)));
+    assert(check_correctness(100, gen_test(100, 1000, -3)));
+    assert(check_correctness(100, gen_test(100, 1000, -5)));
 }

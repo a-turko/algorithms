@@ -37,7 +37,7 @@ int main(int argc, char **argv)
         scanf ("%d %d", &e.first, &e.second);
         e.first--;
         e.second--;
-        debug ("(%d %d)", e.first, e.second);
+        
         if (!DC.connected(e.first,e.second)) {
             n_cc--;
         }
