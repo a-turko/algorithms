@@ -17,7 +17,7 @@ DynamicConnectivity::DynamicConnectivity(int n) {
  * 
  * Complexity: O(log n)
  * 
- * Extra amortization cost: O(log^2 n), because a new edge is inserted
+ * Extra amortization cost: O(log^2 n) (a new edge is inserted)
 */
 void DynamicConnectivity::insert(int a, int b) {
 
@@ -50,7 +50,7 @@ void DynamicConnectivity::insert_edge(int a, int b, int level) {
 }
 
 /**
- * Checks whether vertices a and b are connected in the current graph
+ * Checks whether vertices a and b are connected
  * Complexity: O(log n)
 */
 bool DynamicConnectivity::connected(int a, int b) {
@@ -58,23 +58,26 @@ bool DynamicConnectivity::connected(int a, int b) {
 }
 
 /**
- * Looks for a replacement of edge (a,b) among nontree edges on the specified level,
+ * Looks for a replacement of edge (a,b) among nontree edges on
+ * the specified level.
  * Returns true on success and false on failure.
  * 
- * Let A and B be the trees containing a and b (w.l.o.g let A_l be the smaller one).
- * In order to reconnect A and B it is enough to browse through all nontree edges with
- * one endpoint in A. The other endpoint will either be in A or in B (the (a,b) edge
+ * Let A and B be the trees containing a and b (w.l.o.g let A_l
+ * be the smaller one). In order to reconnect A and B suffices
+ * to browse through all nontree edges with one endpoint in A.
+ * The other endpoint will either be in A or in B (the (a,b) edge
  * has just been removed).
- * Since, by our invariant, A_i and B_i together have at most n / 2^l vertices,
- * A_i has at most n / 2^{l+1} of them. Thus, we can promote its tree edges to the 
- * next level. This way, each nontree edge with both endpoints in A can also be
- * promoted to the next level (it will be a nontree edge there, too).
- * This allows us to account for the O(log n) operations needed to process it.
- * As soon as we encounter a nontree edge with one endpoint in A and the other in B,
- * we stop the procedure.
+ * Since, by our invariant, A_i and B_i together have at most
+ * n / 2^l vertices, A_i has at most n / 2^{l+1} of them.
+ * Thus, we can promote its tree edges to the next level.
+ * This way, each nontree edge with both endpoints in A can also
+ * be promoted to the next level (there, it'll be a nontree edge
+ * too). This allows us to account for the O(log n) operations
+ * needed to process it. When we encounter a nontree edge with
+ * one endpoint in A and another in B, we stop the procedure.
  * 
- * Complexity: O(log n) per each edge whose level grows by one (amortized) plus O(log n)
- * (not amortized)
+ * Complexity: O(log n) per each edge whose level grows by one
+ * (amortized) plus O(log n) (not amortized)
  * 
 */
 bool DynamicConnectivity::find_replacement(int a, int b, int level, pair <int, int> &replacement) {
@@ -107,15 +110,17 @@ bool DynamicConnectivity::find_replacement(int a, int b, int level, pair <int, i
 }
 
 /**
- * Removes an (a,b) edge from the graph and looks for its replacement
+ * Removes an (a,b) edge from the graph and looks for its
+ * replacement
  * 
- * If it's a nontree edge, removing it does not impact connectivity.
- * Otherwise, after removing it, a and b are in different trees at all levels.
- * However, levels where (a,b) used to exist can contain edges connecting
+ * If it's a nontree edge, removing it does not impact
+ * connectivity. Otherwise, after removing it, a and b
+ * are in different trees at all levels. However, levels
+ * where (a,b) used to exist can contain edges connecting
  * those trees.
  * 
- * Complexity: O(log^2 n) (not amortized) and O(log n) per each edge
- * whose level grows by one (amortized)
+ * Complexity: O(log^2 n) (not amortized) and O(log n) 
+ * per each edge whose level grows by one (amortized)
  */ 
 void DynamicConnectivity::remove(int a, int b) {
 
