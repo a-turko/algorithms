@@ -42,4 +42,4 @@ pdf:
 	enscript -C -2r -Ecpp -fCourier8 -o - $(dc_sources) | ps2pdf - dc.pdf
 
 clean:
-	rm -f $(objects) $(executables) $(submissions)
+	rm -f $(objects) $(executables) $(submissions) dc.pdf

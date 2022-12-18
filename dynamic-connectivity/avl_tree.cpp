@@ -122,14 +122,17 @@ void AVLNode::replace_child(AVLNode *old_child, AVLNode *new_child) {
 }
 
 /**
- * Recursively merge two trees into one (possibly also inserting a middle vertex).
+ * Recursively merges two trees into one
+ * (optionally also inserting a middle vertex).
  * 
- * This procedure keeps taking the child of the tree with greater height
- * until the heights of the two trees can be put as children of a single (middle) vertex.
+ * This procedure keeps taking the child of the tree with greater
+ * height until the heights of the two trees can be put as
+ * children of a single (middle) vertex.
  * This costs O(abs(left->height - right->height))
  * 
- * However, if the middle vertex is NULL, this can't be done, and the procedure
- * has to be repeated until one of the trees is empty, which case can be trivially handled.
+ * However, if the middle vertex is NULL, this can't be done, and
+ * the procedure is repeated until one of the trees is empty,
+ * which case can be trivially handled.
  * This costs O(log n)
 */
 AVLNode *AVLNode::merge(AVLNode *left, AVLNode *middle, AVLNode *right) {
@@ -472,7 +475,8 @@ bool AVLNode::correct_tree(AVLNode *correct_parent) {
     int correct_on_level_cnt = is_on_level() ? 1 : 0;
 
     if (parent != correct_parent) {
-        debug ("parent does not match: 0x%llx vs 0x%llx\n", (long long)parent, (long long)correct_parent);
+        debug ("parent does not match: 0x%llx vs 0x%llx\n",
+        (long long)parent, (long long)correct_parent);
         return false;
     }
 

@@ -29,13 +29,13 @@ void ETTForest::insert_tree_edge(int a, int b, bool on_level) {
     TEdgeHooks[edge_id(a,b)] = ab_edge;
     TEdgeHooks[edge_id(b,a)] = ba_edge;
 
-    // split the Euler tour to the part up to a and the part after a
+    // split the Euler tour to the part up to a and after a
     auto [left_a, right_a] = Vertices[a].split();
     // do the same for b
     auto [left_b, right_b] = Vertices[b].split();    
 
-    // create the new Euler tour making sure that the new edge is always between
-    // vertices a and b or edges having with them as endpoints
+    // create the new Euler tour placing the new edge
+    // between vertices a and b or edges with them as endpoints
     AVLNode::merge(AVLNode::merge(left_a, ab_edge, right_b),
                    NULL, 
                    AVLNode::merge(left_b, ba_edge, right_a));
@@ -51,21 +51,23 @@ void ETTForest::remove_tree_edge(int a, int b) {
     auto [l, r] = ab_edge->split();
     if (l == ba_edge->root()) {
 
-        // the tour described by lr starts after (b,a) and finishes at (a,b),
-        // so it contains exactly the vertices in a's connected component
+        // the tour routed in lr starts after (b,a) and finishes
+        // at (a,b), so it describes the new connected component
+        // of the vertex a
         auto [ll, lr] = ba_edge->split();
 
-        // without the lr part, the tour describes b's connected component
+        // the rest of the tour describes b's connected component
         AVLNode::merge(ll, NULL, r);
 
     } else {
         assert(r == ba_edge->root());
 
-        // the tour described by rl starts after (a,b) and finishes at (b,a),
-        // so it contains exactly the vertices in b's connected component
+        // the tour routed in rl starts after (a,b) and finishes
+        // at (b,a), so it describes the new connected component
+        // of the vertex b
         auto [rl, rr] = ba_edge->split();
 
-        // without the rl part, the tour describes a's connected component
+        // the rest of the tour describes a's connected component
         AVLNode::merge(l, NULL, rr);
     }
 
@@ -105,7 +107,8 @@ bool ETTForest::pop_nontree_edge(int a, pair <int, int> &edge) {
     if (!root->pop_nontree_edge(edge))
         return false;
 
-    Vertices[edge.second].erase_nontree_edge(NTEdgeHooks[edge_id(edge.second, edge.first)]);
+    Vertices[edge.second].erase_nontree_edge(
+        NTEdgeHooks[edge_id(edge.second, edge.first)]);
     NTEdgeHooks.erase(edge_id(edge.first, edge.second));
     NTEdgeHooks.erase(edge_id(edge.second, edge.first));
 

@@ -12,16 +12,21 @@ using namespace std;
  * Euler Tour Tree Forest data structure for storing a forest
  * over n vertices.
  * 
- * Each tree is represented as an Euler tour stored on an AVL tree (avl_tree.hpp).
- * Each Euler tour contains each edge exactly twice and each vertex exactly once.
- * Since an Euler tour visits a vertex the same number of times as its degree,
- * there may be many possible 
+ * Each tree is represented as an Euler tour stored on an AVL
+ * tree (avl_tree.hpp). An Euler tour is formed by two EdgeNodes
+ * for every tree edge (one in each direction) and a single
+ * VertexNode for each vertex. Since an Euler tour visits a
+ * vertex the same number of times as its degree, there may be
+ * many possible positions for a VertexNode in the Euler tour.
+ * For example, the following a two Euler tours are equivalent:
+ * (0,1) ~ (1) ~ (1, 4) ~ (4) ~ (4,1) ~ (1,0)
+ * (0,1) ~ (1, 4) ~ (4) ~ (4,1) ~ (1) ~ (1,0)
  */
 
 class ETTForest {
     public:
 
-    /* Initializes the data structure to handle a _n-vertex graph */
+    /* Initializes the data structure for a n-vertex graph */
     ETTForest(int _n);
 
     ~ETTForest();
@@ -66,7 +71,7 @@ class ETTForest {
     void remove_nontree_edge(int a, int b);
 
     /**
-     * Checks whether vertices a and b are connected in the forest
+     * Checks whether vertices a and b are connected
      * Complexity: O(log n)
      */
     bool connected(int a, int b);
@@ -74,15 +79,16 @@ class ETTForest {
     bool is_tree_edge(int a, int b);
 
     /**
-     * Pops any nontree edge stored in the connected component of a
-     * and returns it in edge
+     * Pops any nontree edge stored in the connected component
+     * of a and returns it in edge parameter
      * If no such edge exists, returns false, otherwise true
      * Complexity: O(log n)
      */
     bool pop_nontree_edge(int a, pair <int, int> &edge);
 
     /**
-     * Returns the number of vertices in the connected component of a
+     * Returns the number of vertices in the connected component
+     * containing the vertex a
      * Complexity: O(log n)
      */
     int size(int a);
