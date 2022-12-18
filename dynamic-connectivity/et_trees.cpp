@@ -6,12 +6,7 @@ static int64_t edge_id(int a, int b) {
     return (int64_t(a) << 32) | b;
 }
 
-ETTForest::ETTForest(int _n) {
-    n = _n;
-    dummy_node_credits = 0;
-    logn = 0;
-    while ((1<<logn) < n) logn++;
-
+ETTForest::ETTForest(int n) {
     for (int i = 0; i < n; i++) {
         Vertices.push_back(VertexNode(i));
     }
@@ -27,15 +22,20 @@ ETTForest::~ETTForest() {
 }
 
 void ETTForest::insert_tree_edge(int a, int b, bool on_level) {
+    // it's enough to mark only one of the copies as on the level
     EdgeNode *ab_edge = new EdgeNode(a,b, on_level);
     EdgeNode *ba_edge = new EdgeNode(b,a, false);
 
     TEdgeHooks[edge_id(a,b)] = ab_edge;
     TEdgeHooks[edge_id(b,a)] = ba_edge;
 
+    // split the Euler tour to the part up to a and the part after a
     auto [left_a, right_a] = Vertices[a].split();
+    // do the same for b
     auto [left_b, right_b] = Vertices[b].split();    
 
+    // create the new Euler tour making sure that the new edge is always between
+    // vertices a and b or edges having with them as endpoints
     AVLNode::merge(AVLNode::merge(left_a, ab_edge, right_b),
                    NULL, 
                    AVLNode::merge(left_b, ba_edge, right_a));
@@ -50,16 +50,26 @@ void ETTForest::remove_tree_edge(int a, int b) {
 
     auto [l, r] = ab_edge->split();
     if (l == ba_edge->root()) {
+
+        // the tour described by lr starts after (b,a) and finishes at (a,b),
+        // so it contains exactly the vertices in a's connected component
         auto [ll, lr] = ba_edge->split();
+
+        // without the lr part, the tour describes b's connected component
         AVLNode::merge(ll, NULL, r);
 
     } else {
         assert(r == ba_edge->root());
 
+        // the tour described by rl starts after (a,b) and finishes at (b,a),
+        // so it contains exactly the vertices in b's connected component
         auto [rl, rr] = ba_edge->split();
+
+        // without the rl part, the tour describes a's connected component
         AVLNode::merge(l, NULL, rr);
     }
 
+    // remove both copies of this edge from the Euler tours
     ab_edge->unlink();
     ba_edge->unlink();
     delete ab_edge;
@@ -112,6 +122,21 @@ bool ETTForest::is_tree_edge(int a, int b) {
 
 int ETTForest::size(int a) {
     return Vertices[a].root()->size;
+}
+
+void ETTForest::print() {
+#ifdef DBG
+    debug ("Print the forest:\n");
+    set <AVLNode*> processed;
+    for (auto &v: Vertices) {
+        auto root = v.root();
+        if (processed.find(root) == processed.end()) {
+            processed.insert(root);
+            root->print_tree();
+            debug("\n");
+        }
+    }
+#endif
 }
 
 bool ETTForest::correct() {

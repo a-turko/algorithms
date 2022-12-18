@@ -45,6 +45,24 @@ AVLNode *AVLNode::root() {
     return cur;
 }
 
+/**
+ * Split the tree into two trees, one containing all nodes to the left of this (inclusive),
+ * and the ones to the right (exclusive) in the other tree.
+ * 
+ * Starting from this, we process all the nodes on the path to the root.
+ * Each such node has two (possibly NULL) children -- one has already been processed,
+ * the subtree of the other is either fully to the left or to the right of this and
+ * should be added to the respective tree (left_tree or right_tree).
+ * 
+ * This creates a series of merge operations with nonnull middle node.
+ * Note that all subtrees being merged to left_tree (and right_tree)
+ * have nondecreasing heights. Also, at the point of each such merge,
+ * the left_tree (and right_tree) can have height at most 1 greater
+ * than tree being merged to it (by the AVL conditions). Thus, the
+ * total cost of running all those merges (sum of absolute differences 
+ * of heights of the subtrees being merged at each step) is O(log n).
+ * This gives us the complexity O(log n).
+*/
 pair <AVLNode*, AVLNode*> AVLNode::split() {
     AVLNode *left_child, *right_child, *left_tree, *right_tree, *prv, *cur, *nxt;
     left_tree = left;
@@ -103,6 +121,17 @@ void AVLNode::replace_child(AVLNode *old_child, AVLNode *new_child) {
     }
 }
 
+/**
+ * Recursively merge two trees into one (possibly also inserting a middle vertex).
+ * 
+ * This procedure keeps taking the child of the tree with greater height
+ * until the heights of the two trees can be put as children of a single (middle) vertex.
+ * This costs O(abs(left->height - right->height))
+ * 
+ * However, if the middle vertex is NULL, this can't be done, and the procedure
+ * has to be repeated until one of the trees is empty, which case can be trivially handled.
+ * This costs O(log n)
+*/
 AVLNode *AVLNode::merge(AVLNode *left, AVLNode *middle, AVLNode *right) {
 
     if (left == NULL) {
@@ -211,6 +240,12 @@ AVLNode* AVLNode::rotate_left() {
     return r_node;
 }
 
+/**
+ * Rebalances the tree rooted in this node assuming
+ * that the subtrees of this node are balanced.
+ * This is done by performing (possibly many) rotations from
+ * a higher subtree to the lower one.
+*/
 AVLNode* AVLNode::balance() {
 
     int hl = left ? left->height : 0;
@@ -376,6 +411,58 @@ bool EdgeNode::promote_tree_edge(pair <int, int> &edge) {
 
 bool VertexNode::promote_tree_edge(pair <int, int> &edge) {
     return AVLNode::promote_tree_edge(edge);
+}
+
+// diagnostic methods:
+
+void AVLNode::print_tree(int indent) {
+#ifdef DBG
+    if (left)
+        left->print_tree(indent + 3);
+    print_node(indent);
+    if (right)
+        right->print_tree(indent + 3);
+#else
+    (void) indent;
+#endif
+}
+
+void AVLNode::print_node(int indent) {
+#ifdef DBG
+    char spaces[20] = "                   ";
+    spaces[min(19, indent)] = 0;
+        debug("%s0x%llx: left = 0x%llx, right = 0x%llx, parent = 0x%llx,\n \
+            %sheight = %d, nontree_cnt = %d, on_level_cnt = %d, size = %d\n",
+            spaces, (long long) this, (long long) left, (long long) right,
+            (long long) parent, spaces, height, nontree_cnt, on_level_cnt, size);
+#else
+    (void) indent;
+#endif
+}
+
+void VertexNode::print_node(int indent) {
+#ifdef DBG
+    char spaces[20] = "                   ";
+    spaces[min(19, indent)] = 0;
+    debug("%sVertexNode: %d: ", spaces, idx);
+    for (int x : NTEdges)
+        debug(" %d", x);
+    debug("\n");
+    AVLNode::print_node(indent);
+#else
+    (void) indent;
+#endif
+}
+
+void EdgeNode::print_node(int indent) {
+#ifdef DBG
+    char spaces[20] = "                   ";
+    spaces[min(19, indent)] = 0;
+    debug("%sEdgeNode: (%d %d)\n", spaces, from, to);
+    AVLNode::print_node(indent);
+#else
+    (void) indent;
+#endif
 }
 
 bool AVLNode::correct_tree(AVLNode *correct_parent) {

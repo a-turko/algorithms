@@ -5,6 +5,13 @@
 #include "et_trees.cpp"
 #include "avl_tree.cpp"
 
+/**
+ * Solution to the problem Disconnected Graph:
+ * First read in the graph G, then asnwers k queries.
+ * In each query we would like to know if G is connected
+ * after a few edges have been removed.
+*/
+
 const int K = 1e5;
 int Res[K];
 

@@ -49,6 +49,10 @@ void DynamicConnectivity::insert_edge(int a, int b, int level) {
     }
 }
 
+/**
+ * Checks whether vertices a and b are connected in the current graph
+ * Complexity: O(log n)
+*/
 bool DynamicConnectivity::connected(int a, int b) {
     return Forests[0].connected(a, b);
 }
@@ -145,6 +149,15 @@ void DynamicConnectivity::remove(int a, int b) {
     if (level >= 0)
         insert_edge(replacement.first, replacement.second, level);
 
+}
+
+void DynamicConnectivity::print() {
+    #ifdef DBG
+    for (int i = 0; i <= L; i++) {
+        debug ("--------------Level %d--------------------\n", i);
+        Forests[i].print();
+    }
+    #endif
 }
 
 bool DynamicConnectivity::correct() {

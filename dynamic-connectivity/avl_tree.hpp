@@ -8,48 +8,89 @@
 #include <cassert>
 using namespace std;
 
-#define debug(...) {} //fprintf(stderr, __VA_ARGS__)
+// A switch for managing debug output in the whole DC implementation
+// #define DBG
+#ifdef DBG  
+    #define debug(...) fprintf(stderr, __VA_ARGS__), fflush(stderr)
+#else
+    #define debug(...) {}
+#endif
+
+/**
+ * AVL Binary Search Tree (https://en.wikipedia.org/wiki/AVL_tree)
+ */
 
 class AVLNode {
     public:
-    // number of vertex nodes in the subtree
+    /* number of vertex nodes in the subtree of the current node */
     int size;
 
     AVLNode();
     virtual ~AVLNode() {};
 
+    /**
+     * Splits the tree into two parts and returns pointers to their roots
+     * The first part contains all nodes to the left of the current node
+     * (inclusive), the second part contains all nodes to the right of it
+     * (exclusive).
+     * 
+     * Complexity: O(log n)
+     */
     pair <AVLNode*, AVLNode*> split();
+
+    /**
+     * Merges two trees (left and right) into one (the middle node is optional)
+     * and returns the root of the resulting tree.
+     * The order of nodes is as follows: left(unchanged), middle, right(unchanged).
+     * 
+     * Complexity if middle is NULL: O(max(h_l, h_r))
+     * Complexity if middle is not NULL: O(abs(h_l - h_r))
+     * Here h_l and h_r are the heights of the left and right subtrees.
+    */
     static AVLNode *merge(AVLNode *left, AVLNode *middle, AVLNode *right);
+
+    /**
+     * Returns the root of the tree represting the connected component of the node.
+     * Complexity: O(log n)
+     */
     AVLNode *root();
-    virtual bool pop_nontree_edge(pair <int, int> &edge);
-    virtual bool promote_tree_edge(pair <int, int> &edge);
-    bool correct_tree(AVLNode *correct_parent);
+
+    /**
+     * Removes the current node from the BST it belongs to
+     * Complexity: O(log n)
+    */
     void unlink();
 
-    void print_tree(int indent = 0) {
-        
-        if (left)
-            left->print_tree(indent + 3);
-        print_node(indent);
-        if (right)
-            right->print_tree(indent + 3);
-    }
+    /**
+     * Pops a nontree edge from the subtree of the current node
+     * and returns it in the edge parameter.
+     * Returns true on success and false on failure.
+     * Complexity: O(log n)
+     */
+    virtual bool pop_nontree_edge(pair <int, int> &edge);
 
-    virtual void print_node(int indent = 0) {
-        char spaces[20] = "                   ";
-        spaces[min(19, indent)] = 0;
-        debug("%s0x%llx: left = 0x%llx, right = 0x%llx, parent = 0x%llx,\n \
-                %sheight = %d, nontree_cnt = %d, on_level_cnt = %d, size = %d\n",
-                spaces, (long long) this, (long long) left, (long long) right,
-                (long long) parent, spaces, height, nontree_cnt, on_level_cnt, size);
-    }
+    /**
+     * Pops a tree edge marked as on_level from the subtree of the current node
+     * and returns it in the edge parameter.
+     * Returns true on success and false on failure.
+     * Complexity: O(log n)
+     */
+    virtual bool promote_tree_edge(pair <int, int> &edge);
+
+    /**
+     * Checks if the invariants hold in the subtree of the current node
+     * Complexity: linear in the size of the tree
+    */
+    bool correct_tree(AVLNode *correct_parent);
+
+    void print_tree(int indent = 0);
+    virtual void print_node(int indent = 0);
 
     private:
     AVLNode *balance();
     AVLNode *rotate_left();
     AVLNode *rotate_right();
     void unlink_children();
-
 
     void replace_child(AVLNode *old_child, AVLNode *new_child);
 
@@ -72,12 +113,7 @@ class EdgeNode : public AVLNode {
     bool promote_tree_edge(pair <int, int> &edge);
     bool pop_nontree_edge(pair <int, int> &edge);
 
-    void print_node(int indent = 0) {
-        char spaces[20] = "                   ";
-        spaces[min(19, indent)] = 0;
-        debug ("%sEdgeNode: (%d %d)\n", spaces, from, to);
-        AVLNode::print_node(indent);
-    }
+    void print_node(int indent = 0);
     
     private:
         int get_num_nontree_edges();
@@ -95,18 +131,11 @@ class VertexNode: public AVLNode {
     void erase_nontree_edge(list<int>::iterator it);
     bool promote_tree_edge(pair <int, int> &edge);
 
-    void print_node(int indent = 0) {
-        char spaces[20] = "                   ";
-        spaces[min(19, indent)] = 0;
-        debug ("%sVertexNode: %d: ", spaces, idx);
-        for (int x: NTEdges) debug(" %d", x);
-        debug("\n");
-        AVLNode::print_node(indent);
-    }
+    void print_node(int indent = 0);
 
 
     private:
-    list<int> NTEdges;
+    list <int> NTEdges;
     
     int get_num_nontree_edges();
     bool is_on_level();

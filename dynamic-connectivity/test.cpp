@@ -4,7 +4,10 @@
 #include <set>
 #include <queue>
 #include "dc.hpp"
-#define debug(...) {} //fprintf(stderr, __VA_ARGS__), fflush(stderr)
+
+//#define test_debug(...) {}
+#define test_debug(...) fprintf(stderr, __VA_ARGS__), fflush(stderr)
+
 using namespace std;
 
 class NaiveConnectivity {
@@ -134,12 +137,12 @@ bool check_correctness(int n, vector <pair <char, pair <int, int> > > test) {
             bool dc = DC.connected(p.second.first, p.second.second);
 
             if (!nc and dc) {
-                debug ("Error (od %d): %d %d are not connected (false positive)\n", idx, p.second.first, p.second.second);
+                test_debug ("Error (od %d): %d %d are not connected (false positive)\n", idx, p.second.first, p.second.second);
                 return false;
             }
             
             if (nc and !dc) {
-                debug ("Error (op %d): %d %d are connected (false negative)\n", idx, p.second.first, p.second.second);
+                test_debug ("Error (op %d): %d %d are connected (false negative)\n", idx, p.second.first, p.second.second);
                 return false;
             }
         }
@@ -157,7 +160,7 @@ bool verify_execution(int n, vector <pair <char, pair <int, int> > > test) {
 
     for (auto p: test) {
         idx++;
-        debug("\nExecuting %c %d %d (id %d)\n", p.first, p.second.first, p.second.second, idx);
+        test_debug("\nExecuting %c %d %d (id %d)\n", p.first, p.second.first, p.second.second, idx);
         
         if (p.first == 'I')
             DC.insert(p.second.first, p.second.second);
@@ -184,8 +187,8 @@ int main()
     for (int i = 0; i < 100; i++) {
         printf ("Test %d\n", i);
         if (!verify_execution(500, gen_test(500, 10000, i))) {
-            debug ("Failed on test %d");
-            return 0;
+            test_debug ("Failed on test %d", i);
+            assert(0);
         }
 
         assert(check_correctness(500, gen_test(500, 10000, i)));
