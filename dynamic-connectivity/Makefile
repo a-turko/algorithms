@@ -39,7 +39,7 @@ cf_e: cf_e.cpp
 	$(CXX) $(CXXFLAGS) $(SANITIZE) cf_e_standalone.cpp -o cf_e
 
 pdf:
-	enscript -C -2r -Ecpp -fCourier8 -o - $(dc_sources) | ps2pdf - dc.pdf
+	enscript -C --color=1 -2r -Ecpp -fCourier8 -o - $(dc_sources) | ps2pdf - dc.pdf
 
 clean:
 	rm -f $(objects) $(executables) $(submissions) dc.pdf
