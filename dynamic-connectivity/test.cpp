@@ -5,8 +5,8 @@
 #include <queue>
 #include "dc.hpp"
 
-//#define test_debug(...) {}
-#define test_debug(...) fprintf(stderr, __VA_ARGS__), fflush(stderr)
+#define test_debug(...) {}
+//#define test_debug(...) fprintf(stderr, __VA_ARGS__), fflush(stderr)
 
 using namespace std;
 
