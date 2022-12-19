@@ -46,22 +46,26 @@ AVLNode *AVLNode::root() {
 }
 
 /**
- * Split the tree into two trees, one containing all nodes to the left of this (inclusive),
- * and the ones to the right (exclusive) in the other tree.
+ * Split the tree into two trees, one containing all nodes to the
+ * left of the current node (inclusive), and the ones to the
+ * righ (exclusive) in the other tree.
  * 
- * Starting from this, we process all the nodes on the path to the root.
- * Each such node has two (possibly NULL) children -- one has already been processed,
- * the subtree of the other is either fully to the left or to the right of this and
- * should be added to the respective tree (left_tree or right_tree).
+ * Starting from this, we process all the nodes on the path to
+ * the root. Each such node has two (possibly NULL) children
+ * -- one has already been processed, the subtree of the other
+ * is either fully to the left or to the right of this and
+ * should be added to the respective tree
+ * (left_tree or right_tree).
  * 
- * This creates a series of merge operations with nonnull middle node.
- * Note that all subtrees being merged to left_tree (and right_tree)
- * have nondecreasing heights. Also, at the point of each such merge,
- * the left_tree (and right_tree) can have height at most 1 greater
- * than tree being merged to it (by the AVL conditions). Thus, the
- * total cost of running all those merges (sum of absolute differences 
- * of heights of the subtrees being merged at each step) is O(log n).
- * This gives us the complexity O(log n).
+ * This creates a series of merge operations with nonnull middle
+ * node. Note that all subtrees being merged to left_tree
+ * (and right_tree) have nondecreasing heights. Also, at the
+ * point of each such merge, the left_tree (and right_tree) can
+ * have height at most 1 greater than tree being merged to it
+ * (by the AVL conditions). Thus, the total cost of running all
+ * these merge operations (sum of absolute differences of
+ * heights of the subtrees being merged at each step)
+ * is O(log n). This gives us the complexity O(log n).
 */
 pair <AVLNode*, AVLNode*> AVLNode::split() {
     AVLNode *left_child, *right_child, *left_tree, *right_tree, *prv, *cur, *nxt;
@@ -436,8 +440,9 @@ void AVLNode::print_node(int indent) {
     spaces[min(19, indent)] = 0;
         debug("%s0x%llx: left = 0x%llx, right = 0x%llx, parent = 0x%llx,\n \
             %sheight = %d, nontree_cnt = %d, on_level_cnt = %d, size = %d\n",
-            spaces, (long long) this, (long long) left, (long long) right,
-            (long long) parent, spaces, height, nontree_cnt, on_level_cnt, size);
+            spaces, (long long) this, (long long) left,
+            (long long) right, (long long) parent, spaces,
+            height, nontree_cnt, on_level_cnt, size);
 #else
     (void) indent;
 #endif

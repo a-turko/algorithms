@@ -14,7 +14,7 @@ using namespace std;
  * 
  * Brief description of the algorithm:
  * Let G be the graph we are maintaining.
- * Each edge of G is assigned a level l in [0, log n].
+ * Each edge of G is assigned a level from [0, log n].
  * A newly added edge is assigned level 0, which can change
  * during the course of the algorithm.
  * The data structure keeps a family of log n forests:
@@ -23,7 +23,8 @@ using namespace std;
  * it have level at least i. Also, we maintain that F_{i+1} is
  * always a subgraph of F_i. Furthermore, we will maintain that
  * edges on level i form connected components of size
- * at most n / (2^i). Hence, F_{log n} won't contain any edges.
+ * at most n / (2^i). Hence, (log n + 1) levels are guaranteed
+ * to capture all the edges of G.
  * 
  * Each forest is implemented as an union of Euler Tour Trees
  * (et_trees.hpp).This data structure suports connectivity

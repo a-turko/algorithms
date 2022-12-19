@@ -148,8 +148,10 @@ void DynamicConnectivity::remove(int a, int b) {
 
     // Look for a replacement of the removed edge:
     pair <int, int> replacement;
-    while (level >= 0 and !find_replacement(a, b, level, replacement))
+    while (level >= 0 and
+           !find_replacement(a, b, level, replacement)) {
         level--;
+    }
 
     if (level >= 0)
         insert_edge(replacement.first, replacement.second, level);
@@ -159,7 +161,7 @@ void DynamicConnectivity::remove(int a, int b) {
 void DynamicConnectivity::print() {
     #ifdef DBG
     for (int i = 0; i <= L; i++) {
-        debug ("--------------Level %d--------------------\n", i);
+        debug ("--------------Level %d-------------------\n", i);
         Forests[i].print();
     }
     #endif
