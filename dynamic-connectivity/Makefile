@@ -1,4 +1,4 @@
-CXXFLAGS= -std=c++17 -Wall -Wextra -pedantic -g
+CXXFLAGS= -std=c++17 -Wall -Wextra -Wshadow -pedantic -g
 CXX= g++
 SANITIZE= -fsanitize=address -fsanitize=undefined -static-libasan
 OPTIMIZE= -O3
